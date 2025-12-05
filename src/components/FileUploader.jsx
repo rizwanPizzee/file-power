@@ -7,6 +7,7 @@ import { STORAGE_BUCKET } from "../lib/constants";
 
 const FileUploader = ({ onUploaded, onUploadStart }) => {
   const [uploading, setUploading] = useState(false);
+  const [checkingFile, setCheckingFile] = useState(false);
   const [alert, setAlert] = useState(null);
   const fileInputRef = useRef(null);
   const toast = useToast();
@@ -26,21 +27,81 @@ const FileUploader = ({ onUploaded, onUploadStart }) => {
       uri: file, // In web, the file object itself is used
     };
 
-    // Show confirmation alert
-    setAlert({
-      title: "Confirm Upload",
-      message: `Do you want to upload "${file.name}" (${formatBytes(
-        file.size
-      )})?`,
-      buttons: [
-        { text: "Cancel", style: "cancel", onPress: () => setAlert(null) },
-        {
-          text: "Upload",
-          style: "default",
-          onPress: () => proceedUpload(fileMeta),
-        },
-      ],
-    });
+    try {
+      setCheckingFile(true);
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+
+      if (!user) {
+        setCheckingFile(false);
+        setAlert({
+          title: "Not signed in",
+          message: "You must be signed in to upload files.",
+          buttons: [{ text: "OK", style: "default" }],
+        });
+        return;
+      }
+
+      // Check if file exists
+      const filePath = `${user.id}/${file.name}`;
+      const { data: existingFile } = await supabase
+        .from("files")
+        .select("id")
+        .eq("path", filePath)
+        .single();
+
+      if (existingFile) {
+        setCheckingFile(false);
+        setAlert({
+          title: "File already exists",
+          message: (
+            <>
+              File "
+              <span style={{ color: "#ff4343ff", fontWeight: "bold" }}>
+                {file.name}
+              </span>
+              " (Size: {formatBytes(file.size)}) already exists with same name.
+            </>
+          ),
+          buttons: [
+            { text: "Cancel", style: "cancel", onPress: () => setAlert(null) },
+            {
+              text: "Keep Both",
+              style: "default",
+              onPress: () => proceedUpload(fileMeta, "keep_both"),
+            },
+          ],
+        });
+      } else {
+        setCheckingFile(false);
+        // Show confirmation alert for new file
+        setAlert({
+          title: "Confirm Upload",
+          message: (
+            <>
+              Do you want to upload "
+              <span style={{ color: "#ff4343ff", fontWeight: "bold" }}>
+                {file.name}
+              </span>
+              " (Size: {formatBytes(file.size)})?
+            </>
+          ),
+          buttons: [
+            { text: "Cancel", style: "cancel", onPress: () => setAlert(null) },
+            {
+              text: "Upload",
+              style: "default",
+              onPress: () => proceedUpload(fileMeta, "new"),
+            },
+          ],
+        });
+      }
+    } catch (error) {
+      console.error("Error checking file existence:", error);
+      setCheckingFile(false);
+      // Fallback to normal upload flow if check fails
+      proceedUpload(fileMeta, "new");
+    }
   };
 
   const formatBytes = (bytes) => {
@@ -51,7 +112,7 @@ const FileUploader = ({ onUploaded, onUploadStart }) => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  const proceedUpload = async (fileMeta) => {
+  const proceedUpload = async (fileMeta, mode = "new") => {
     let tempId;
     try {
       setUploading(true);
@@ -79,10 +140,20 @@ const FileUploader = ({ onUploaded, onUploadStart }) => {
       // Create AbortController for cancellation
       abortControllerRef.current = new AbortController();
 
-      // Upload to Supabase
-      const filename = fileMeta.name;
-      const filePath = `${user.id}/${filename}`;
+      let filename = fileMeta.name;
+      let filePath = `${user.id}/${filename}`;
 
+      // Handle renaming for "Keep Both"
+      if (mode === "keep_both") {
+        const nameParts = filename.split(".");
+        const ext = nameParts.length > 1 ? nameParts.pop() : "";
+        const baseName = nameParts.join(".");
+        const timestamp = Math.floor(Date.now() / 1000);
+        filename = `${baseName} (${timestamp})${ext ? "." + ext : ""}`;
+        filePath = `${user.id}/${filename}`;
+      }
+
+      // Upload to Supabase
       const { data: _data, error } = await supabase.storage
         .from(STORAGE_BUCKET)
         .upload(filePath, fileMeta.uri, {
@@ -118,13 +189,18 @@ const FileUploader = ({ onUploaded, onUploadStart }) => {
         .single();
 
       if (dbError) {
-        console.error("Database insert failed:", dbError);
+        console.error("Database operation failed:", dbError);
         // Try to remove the uploaded file from storage since DB insert failed
-        try {
-          await supabase.storage.from(STORAGE_BUCKET).remove([filePath]);
-          console.log("Cleaned up uploaded file from storage due to DB error");
-        } catch (cleanupErr) {
-          console.warn("Cleanup failed:", cleanupErr);
+        // Only if it was a NEW file (to avoid deleting replaced file if DB update fails)
+        if (mode !== "replace") {
+          try {
+            await supabase.storage.from(STORAGE_BUCKET).remove([filePath]);
+            console.log(
+              "Cleaned up uploaded file from storage due to DB error"
+            );
+          } catch (cleanupErr) {
+            console.warn("Cleanup failed:", cleanupErr);
+          }
         }
         throw new Error("Failed to save file metadata: " + dbError.message);
       }
@@ -213,6 +289,69 @@ const FileUploader = ({ onUploaded, onUploadStart }) => {
           buttons={alert.buttons}
           onRequestClose={() => setAlert(null)}
         />
+      )}
+
+      {checkingFile && (
+        <div
+          style={{
+            position: "fixed",
+            top: "300px",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            backdropFilter: "blur(4px)",
+            WebkitBackdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "var(--card-bg)",
+              border: "1px solid var(--border-color)",
+              borderRadius: "16px",
+              padding: "32px 48px",
+              textAlign: "center",
+              boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+              animation: "fadeIn 0.2s ease-out",
+            }}
+          >
+            <div
+              className="spinner"
+              style={{
+                fontSize: "2.5rem",
+                color: "#3b82f6",
+                marginBottom: "16px",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <FaSpinner />
+            </div>
+            <h3
+              style={{
+                margin: 0,
+                fontSize: "1.15rem",
+                fontWeight: 600,
+                color: "var(--text-color)",
+              }}
+            >
+              Checking file...
+            </h3>
+            <p
+              style={{
+                margin: "8px 0 0 0",
+                fontSize: "0.85rem",
+                color: "var(--text-muted)",
+              }}
+            >
+              Please wait a moment
+            </p>
+          </div>
+        </div>
       )}
     </>
   );

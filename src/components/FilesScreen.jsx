@@ -16,6 +16,8 @@ import {
   FaSortAmountDown,
   FaSortAmountUp,
   FaSync,
+  FaClone,
+  FaEyeSlash,
 } from "react-icons/fa";
 import { STORAGE_BUCKET } from "../lib/constants";
 import "../App.css";
@@ -26,6 +28,7 @@ const FilesScreen = forwardRef((props, ref) => {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState("desc"); // desc or asc
+  const [activeDuplicateFileId, setActiveDuplicateFileId] = useState(null);
 
   // Viewer state
   const [viewerVisible, setViewerVisible] = useState(false);
@@ -50,9 +53,20 @@ const FilesScreen = forwardRef((props, ref) => {
   const [propsUploader, setPropsUploader] = useState(null);
   const [propsLoading, setPropsLoading] = useState(false);
 
+  // User state
+  const [currentUserEmail, setCurrentUserEmail] = useState(null);
+
   useEffect(() => {
     fetchFiles();
+    fetchUser();
   }, []);
+
+  const fetchUser = async () => {
+    const { data } = await supabase.auth.getUser();
+    if (data?.user) {
+      setCurrentUserEmail(data.user.email);
+    }
+  };
 
   const fetchFiles = async () => {
     setLoading(true);
@@ -204,7 +218,16 @@ const FilesScreen = forwardRef((props, ref) => {
         {
           text: "Delete",
           style: "destructive",
+          closeOnPress: false, // Don't close - we'll show loading state
           onPress: async () => {
+            // Show deleting... alert
+            setAlertConfig({
+              title: "Deleting...",
+              message: `Deleting "${file.name}". Please wait...`,
+              buttons: [], // No buttons during deletion
+              showSpinner: true,
+            });
+
             try {
               // Assuming 'files' bucket and file.name or file.path is the path
               const filePath = file.path || file.name;
@@ -239,6 +262,8 @@ const FilesScreen = forwardRef((props, ref) => {
                 console.warn("Failed to log delete action:", logErr);
               }
 
+              // Hide the alert after successful deletion
+              setAlertVisible(false);
               fetchFiles();
             } catch (error) {
               console.error("Error deleting file:", error.message);
@@ -246,8 +271,8 @@ const FilesScreen = forwardRef((props, ref) => {
                 title: "Error",
                 message: error.message,
                 buttons: [{ text: "OK" }],
+                showSpinner: false,
               });
-              setAlertVisible(true);
             }
           },
         },
@@ -494,6 +519,46 @@ const FilesScreen = forwardRef((props, ref) => {
     return list;
   }, [files, searchQuery, sortOrder]);
 
+  // Detect duplicate files based on base name
+  const duplicatesMap = useMemo(() => {
+    const getBaseName = (filename) => {
+      // Remove timestamp suffix like " (1234567890)" from filename
+      // Match pattern: filename (digits).ext or filename (digits) without extension
+      return filename.replace(/\s*\(\d+\)(\.[^.]+)?$/, "$1");
+    };
+
+    const groups = {};
+
+    filteredList.forEach((file) => {
+      const baseName = getBaseName(file.name);
+      if (!groups[baseName]) {
+        groups[baseName] = [];
+      }
+      groups[baseName].push(file);
+    });
+
+    // Only keep groups with more than 1 file (actual duplicates)
+    const duplicates = {};
+    Object.keys(groups).forEach((baseName) => {
+      if (groups[baseName].length > 1) {
+        // Sort the group by uploaded_at to assign consistent indices
+        const sortedGroup = [...groups[baseName]].sort(
+          (a, b) => new Date(a.uploaded_at) - new Date(b.uploaded_at)
+        );
+        // For each file in this group, store its index (1-based) and other duplicates
+        sortedGroup.forEach((file, index) => {
+          duplicates[file.id] = {
+            index: index + 1, // 1-based index
+            total: sortedGroup.length,
+            others: sortedGroup.filter((f) => f.id !== file.id),
+          };
+        });
+      }
+    });
+
+    return duplicates;
+  }, [filteredList]);
+
   return (
     <div className="files-screen">
       <div className="files-header">
@@ -526,7 +591,32 @@ const FilesScreen = forwardRef((props, ref) => {
           </button>
         </div>
       </div>
-
+      {activeDuplicateFileId && (
+        <view
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            marginBottom: "15px",
+            position: "fixed",
+            top: "106px",
+            left: "50%",
+            translate: "-50%",
+            zIndex: 1000,
+          }}
+        >
+          <button
+            className="icon-button1 active"
+            onClick={() => setActiveDuplicateFileId(null)}
+            title="Clear Duplicate Detection"
+          >
+            <FaEyeSlash />{" "}
+            <span style={{ marginLeft: "10px" }}>
+              Clear Duplicate Detection
+            </span>
+          </button>
+        </view>
+      )}
       <FileList
         data={filteredList}
         refreshing={loading || refreshing}
@@ -539,6 +629,10 @@ const FilesScreen = forwardRef((props, ref) => {
         onShare={handleShare}
         downloadingFileId={downloadingFileId}
         downloadProgress={downloadProgress}
+        currentUserEmail={currentUserEmail}
+        duplicatesMap={duplicatesMap}
+        activeDuplicateFileId={activeDuplicateFileId}
+        onDuplicateTagClick={setActiveDuplicateFileId}
       />
 
       <FileViewer
@@ -554,6 +648,7 @@ const FilesScreen = forwardRef((props, ref) => {
         message={alertConfig.message}
         buttons={alertConfig.buttons}
         onRequestClose={() => setAlertVisible(false)}
+        showSpinner={alertConfig.showSpinner}
       />
 
       <RenameModal

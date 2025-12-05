@@ -256,8 +256,15 @@ export default function Header({ user, onSignOut, onUploadStart, onUploaded }) {
                     key={item.id}
                     className={`menu-item ${item.danger ? "danger" : ""}`}
                     onClick={item.action}
+                    style={{
+                      cursor: "pointer",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      textAlign: "center",
+                      width: "100%",
+                    }}
                   >
-                    <span className="menu-icon">{item.icon}</span>
                     <span className="menu-label">{item.label}</span>
                   </button>
                 ))}

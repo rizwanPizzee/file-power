@@ -9,6 +9,7 @@ export default function CustomAlert({
   message,
   buttons = [{ text: "OK", style: "default", onPress: () => {} }],
   onRequestClose = () => {},
+  showSpinner = false,
 }) {
   useLockBodyScroll(visible);
 
@@ -19,30 +20,40 @@ export default function CustomAlert({
   return createPortal(
     <div className="modal-overlay">
       <div className="alert-box">
+        {showSpinner && (
+          <div className="alert-spinner-container">
+            <div className="alert-spinner"></div>
+          </div>
+        )}
         {title && <div className="alert-title">{title}</div>}
         {message && <div className="alert-message">{message}</div>}
 
-        <div className={`alert-buttons ${isVertical ? "vertical" : ""}`}>
-          {buttons.map((btn, idx) => {
-            const btnStyle = btn.style || "default";
-            return (
-              <button
-                key={idx}
-                onClick={() => {
-                  try {
-                    btn.onPress && btn.onPress();
-                  } catch (e) {
-                    console.warn("alert button handler error", e);
-                  }
-                  onRequestClose();
-                }}
-                className={`alert-button ${btnStyle}`}
-              >
-                {btn.text}
-              </button>
-            );
-          })}
-        </div>
+        {buttons.length > 0 && (
+          <div className={`alert-buttons ${isVertical ? "vertical" : ""}`}>
+            {buttons.map((btn, idx) => {
+              const btnStyle = btn.style || "default";
+              return (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    try {
+                      btn.onPress && btn.onPress();
+                    } catch (e) {
+                      console.warn("alert button handler error", e);
+                    }
+                    // Only close if closeOnPress is not explicitly set to false
+                    if (btn.closeOnPress !== false) {
+                      onRequestClose();
+                    }
+                  }}
+                  className={`alert-button ${btnStyle}`}
+                >
+                  {btn.text}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>,
     document.body
