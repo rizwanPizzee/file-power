@@ -45,7 +45,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-color);
+  background: linear-gradient(to bottom, #14293d, #0e4a79);
   color: var(--text-color);
   min-height: 100vh;
 }
@@ -818,8 +818,8 @@ body {
 }
 
 .file-grid-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background: #1f67a173;
+  border: 2px solid #1970b8;
   border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all var(--transition-base);
@@ -827,11 +827,12 @@ body {
   overflow: visible;
   display: flex;
   flex-direction: column;
+  backdrop-filter: blur(1px);
 }
 
 .file-grid-card:hover {
-  background: #1f3d56;
-  border-color: var(--input-border);
+  background: #054d6efa;
+  border: 2px solid #0279b1fa;
   box-shadow: var(--shadow-md);
 }
 
@@ -1141,26 +1142,13 @@ body {
   justify-content: center;
   gap: 14px;
   animation: slideUp 0.2s ease-out;
-  border: 1px solid var(--border-color);
-  border-left: 4px solid transparent;
+  border: 1px solid #4581b3;
   pointer-events: all;
   transition: all var(--transition-base);
 }
 
 .toast:hover {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-}
-
-.toast-success {
-  border-left-color: var(--success);
-}
-
-.toast-error {
-  border-left-color: var(--danger);
-}
-
-.toast-info {
-  border-left-color: #3b82f6;
 }
 
 .toast-icon {

@@ -5,6 +5,10 @@ import CustomAlert from "./CustomAlert";
 import { FaCloudUploadAlt, FaSpinner, FaPlus } from "react-icons/fa";
 import { STORAGE_BUCKET } from "../lib/constants";
 
+// Maximum file size limit: 50MB
+const MAX_FILE_SIZE_MB = 50;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
 const FileUploader = ({ onUploaded, onUploadStart }) => {
   const [uploading, setUploading] = useState(false);
   const [checkingFile, setCheckingFile] = useState(false);
@@ -13,12 +17,44 @@ const FileUploader = ({ onUploaded, onUploadStart }) => {
   const toast = useToast();
   const abortControllerRef = useRef(null);
 
+  const formatBytes = (bytes) => {
+    if (!bytes || bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
   const handleFileSelect = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
     // Reset input so same file can be selected again if needed
     event.target.value = "";
+
+    // Check file size limit
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setAlert({
+        title: "File Too Large",
+        message: (
+          <>
+            The file "
+            <span style={{ color: "#ff4343ff", fontWeight: "bold" }}>
+              {file.name}
+            </span>
+            " ({formatBytes(file.size)}) exceeds the maximum allowed size of{" "}
+            <span style={{ color: "#3b82f6", fontWeight: "bold" }}>
+              {MAX_FILE_SIZE_MB} MB
+            </span>
+            . Please select a smaller file.
+          </>
+        ),
+        buttons: [
+          { text: "OK", style: "default", onPress: () => setAlert(null) },
+        ],
+      });
+      return;
+    }
 
     const fileMeta = {
       name: file.name,
@@ -102,14 +138,6 @@ const FileUploader = ({ onUploaded, onUploadStart }) => {
       // Fallback to normal upload flow if check fails
       proceedUpload(fileMeta, "new");
     }
-  };
-
-  const formatBytes = (bytes) => {
-    if (!bytes || bytes === 0) return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB", "TB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const proceedUpload = async (fileMeta, mode = "new") => {

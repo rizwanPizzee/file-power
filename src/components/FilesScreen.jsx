@@ -131,82 +131,109 @@ const FilesScreen = forwardRef((props, ref) => {
   const [downloadingFileId, setDownloadingFileId] = useState(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
 
+  const formatBytes = (bytes) => {
+    if (!bytes || bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
   const handleDownload = async (file) => {
     if (downloadingFileId) return; // Prevent multiple downloads
 
-    try {
-      setDownloadingFileId(file.id);
-      setDownloadProgress(0);
+    // Show confirmation modal with file details
+    setAlertConfig({
+      title: "Download Confirmation",
+      message: `File Name: ${file.name}\n\nFile Size: ${formatBytes(
+        file.size
+      )}\n\nOnce your download starts, it cannot be cancelled until fully downloaded. Do you want to proceed?`,
+      buttons: [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Download",
+          style: "default",
+          onPress: async () => {
+            setAlertVisible(false);
 
-      const { data } = supabase.storage
-        .from(STORAGE_BUCKET)
-        .getPublicUrl(file.path || file.name);
+            try {
+              setDownloadingFileId(file.id);
+              setDownloadProgress(0);
 
-      if (data?.publicUrl) {
-        // Use XMLHttpRequest to track progress
-        const xhr = new XMLHttpRequest();
-        xhr.open("GET", data.publicUrl, true);
-        xhr.responseType = "blob";
+              const { data } = supabase.storage
+                .from(STORAGE_BUCKET)
+                .getPublicUrl(file.path || file.name);
 
-        xhr.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const progress = (event.loaded / event.total) * 100;
-            setDownloadProgress(progress);
-          }
-        };
+              if (data?.publicUrl) {
+                // Use XMLHttpRequest to track progress
+                const xhr = new XMLHttpRequest();
+                xhr.open("GET", data.publicUrl, true);
+                xhr.responseType = "blob";
 
-        xhr.onload = () => {
-          if (xhr.status === 200) {
-            const blob = xhr.response;
-            const blobUrl = window.URL.createObjectURL(blob);
+                xhr.onprogress = (event) => {
+                  if (event.lengthComputable) {
+                    const progress = (event.loaded / event.total) * 100;
+                    setDownloadProgress(progress);
+                  }
+                };
 
-            const link = document.createElement("a");
-            link.href = blobUrl;
-            link.download = file.name;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(blobUrl);
-          } else {
-            console.error("Download failed with status:", xhr.status);
-            setAlertConfig({
-              title: "Download Failed",
-              message: "Could not download the file. Please try again.",
-              buttons: [{ text: "OK" }],
-            });
-            setAlertVisible(true);
-          }
-          setDownloadingFileId(null);
-          setDownloadProgress(0);
-        };
+                xhr.onload = () => {
+                  if (xhr.status === 200) {
+                    const blob = xhr.response;
+                    const blobUrl = window.URL.createObjectURL(blob);
 
-        xhr.onerror = () => {
-          console.error("Download network error");
-          setAlertConfig({
-            title: "Download Error",
-            message: "Network error occurred during download.",
-            buttons: [{ text: "OK" }],
-          });
-          setAlertVisible(true);
-          setDownloadingFileId(null);
-          setDownloadProgress(0);
-        };
+                    const link = document.createElement("a");
+                    link.href = blobUrl;
+                    link.download = file.name;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(blobUrl);
+                  } else {
+                    console.error("Download failed with status:", xhr.status);
+                    setAlertConfig({
+                      title: "Download Failed",
+                      message: "Could not download the file. Please try again.",
+                      buttons: [{ text: "OK" }],
+                    });
+                    setAlertVisible(true);
+                  }
+                  setDownloadingFileId(null);
+                  setDownloadProgress(0);
+                };
 
-        xhr.send();
-      } else {
-        setDownloadingFileId(null);
-      }
-    } catch (error) {
-      console.error("Error downloading file:", error.message);
-      setAlertConfig({
-        title: "Download Failed",
-        message: "Could not download the file. Please try again.",
-        buttons: [{ text: "OK" }],
-      });
-      setAlertVisible(true);
-      setDownloadingFileId(null);
-      setDownloadProgress(0);
-    }
+                xhr.onerror = () => {
+                  console.error("Download network error");
+                  setAlertConfig({
+                    title: "Download Error",
+                    message: "Network error occurred during download.",
+                    buttons: [{ text: "OK" }],
+                  });
+                  setAlertVisible(true);
+                  setDownloadingFileId(null);
+                  setDownloadProgress(0);
+                };
+
+                xhr.send();
+              } else {
+                setDownloadingFileId(null);
+              }
+            } catch (error) {
+              console.error("Error downloading file:", error.message);
+              setAlertConfig({
+                title: "Download Failed",
+                message: "Could not download the file. Please try again.",
+                buttons: [{ text: "OK" }],
+              });
+              setAlertVisible(true);
+              setDownloadingFileId(null);
+              setDownloadProgress(0);
+            }
+          },
+        },
+      ],
+    });
+    setAlertVisible(true);
   };
 
   const handleDelete = (file) => {
@@ -592,7 +619,7 @@ const FilesScreen = forwardRef((props, ref) => {
         </div>
       </div>
       {activeDuplicateFileId && (
-        <view
+        <div
           style={{
             display: "flex",
             justifyContent: "center",
@@ -615,7 +642,7 @@ const FilesScreen = forwardRef((props, ref) => {
               Clear Duplicate Detection
             </span>
           </button>
-        </view>
+        </div>
       )}
       <FileList
         data={filteredList}
