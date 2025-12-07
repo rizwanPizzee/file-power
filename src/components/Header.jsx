@@ -158,7 +158,7 @@ export default function Header({ user, onSignOut, onUploadStart, onUploaded }) {
         </div>
 
         <div
-          className="storage-badge"
+          className="logs-badge"
           onClick={() => setLogsVisible(true)}
           title="View Logs"
           style={{

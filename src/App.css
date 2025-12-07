@@ -375,10 +375,32 @@ body {
   cursor: pointer;
   border: 1px solid var(--border-color);
   transition: all var(--transition-base);
+  width: 150px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.logs-badge {
+  background: rgba(33, 68, 100, 0.5);
+  padding: 8px 20px;
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  transition: all var(--transition-base);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .storage-badge:hover {
-  background: rgba(33, 68, 100, 0.7);
+  background: rgba(43, 89, 131, 0.7);
+  border-color: var(--input-border);
+}
+
+.logs-badge:hover {
+  background: rgba(43, 89, 131, 0.7);
   border-color: var(--input-border);
 }
 
@@ -654,7 +676,7 @@ body {
 
 .search-bar {
   flex: 1;
-  min-width: 200px;
+  min-width: 180px;
   display: flex;
   align-items: center;
   background: var(--input-bg);
@@ -1939,4 +1961,13 @@ body {
   background: rgba(255, 0, 0, 0.411);
   box-shadow: 0 0 8px rgba(241, 10, 10, 0.5);
   border: 1px solid rgb(255, 0, 0);
+}
+
+@media (max-width: 515px) {
+  .header-container {
+    padding: 8px;
+  }
+  .storage-badge {
+    display: none;
+  }
 }
