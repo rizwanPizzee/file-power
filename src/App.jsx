@@ -2,11 +2,22 @@ import { useState, useEffect } from "react";
 import { supabase } from "./lib/supabase";
 import Login from "./components/Login";
 import MainScreen from "./components/MainScreen";
+import LandingScreen from "./components/LandingScreen";
+import FormulasScreen from "./components/FormulasScreen";
+import {
+  StandardInverseOvercurrent,
+  SiemensRelayThermalOverload,
+  MicomRelayThermalOverload,
+  ImpedanceToReactance,
+  SiemensDiff7UT61X,
+  Siemens7UT86Slope,
+} from "./components/calculators";
 import { ToastProvider } from "./components/Toast";
 import "./App.css";
 
 function App() {
   const [session, setSession] = useState(null);
+  const [screen, setScreen] = useState("landing"); // landing | formulas | filePower | calculator screens
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -22,18 +33,85 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  return (
-    <ToastProvider>
-      {!session ? (
-        <Login />
-      ) : (
-        <MainScreen
-          session={session}
-          onSignOut={() => supabase.auth.signOut()}
-        />
-      )}
-    </ToastProvider>
-  );
+  const handleFilePower = () => {
+    setScreen("filePower");
+  };
+
+  const handleFormulasPower = () => {
+    setScreen("formulas");
+  };
+
+  const handleNavigateToCalculator = (calculatorId) => {
+    setScreen(calculatorId);
+  };
+
+  const handleBackToLanding = () => {
+    setScreen("landing");
+  };
+
+  const handleBackToFormulas = () => {
+    setScreen("formulas");
+  };
+
+  // Render based on current screen
+  const renderScreen = () => {
+    switch (screen) {
+      case "landing":
+        return (
+          <LandingScreen
+            onFilePower={handleFilePower}
+            onFormulasPower={handleFormulasPower}
+          />
+        );
+
+      case "formulas":
+        return (
+          <FormulasScreen
+            onBack={handleBackToLanding}
+            onNavigate={handleNavigateToCalculator}
+          />
+        );
+
+      case "filePower":
+        return !session ? (
+          <Login onBack={handleBackToLanding} />
+        ) : (
+          <MainScreen
+            session={session}
+            onSignOut={() => supabase.auth.signOut()}
+            onGoToLanding={handleBackToLanding}
+          />
+        );
+
+      case "standardInverse":
+        return <StandardInverseOvercurrent onBack={handleBackToFormulas} />;
+
+      case "simensThermal":
+        return <SiemensRelayThermalOverload onBack={handleBackToFormulas} />;
+
+      case "micomThermal":
+        return <MicomRelayThermalOverload onBack={handleBackToFormulas} />;
+
+      case "impedanceToReactance":
+        return <ImpedanceToReactance onBack={handleBackToFormulas} />;
+
+      case "siemensDiff7UT61X":
+        return <SiemensDiff7UT61X onBack={handleBackToFormulas} />;
+
+      case "siemens7UT86Slope":
+        return <Siemens7UT86Slope onBack={handleBackToFormulas} />;
+
+      default:
+        return (
+          <LandingScreen
+            onFilePower={handleFilePower}
+            onFormulasPower={handleFormulasPower}
+          />
+        );
+    }
+  };
+
+  return <ToastProvider>{renderScreen()}</ToastProvider>;
 }
 
 export default App;

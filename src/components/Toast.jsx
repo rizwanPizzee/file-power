@@ -42,7 +42,7 @@ export const ToastProvider = ({ children }) => {
   );
 
   return (
-    <ToastContext.Provider value={{ show, remove }}>
+    <ToastContext.Provider value={{ show, showToast: show, remove }}>
       {children}
       <div className="toast-container">
         {toasts.map((toast) => (

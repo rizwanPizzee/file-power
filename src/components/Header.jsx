@@ -9,11 +9,18 @@ import {
   FaInfoCircle,
   FaTimes,
   FaHistory,
+  FaArrowLeft,
 } from "react-icons/fa";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
 import "../App.css";
 
-export default function Header({ user, onSignOut, onUploadStart, onUploaded }) {
+export default function Header({
+  onBack,
+  user,
+  onSignOut,
+  onUploadStart,
+  onUploaded,
+}) {
   const [profileVisible, setProfileVisible] = useState(false);
   const [logsVisible, setLogsVisible] = useState(false);
 
@@ -137,14 +144,14 @@ export default function Header({ user, onSignOut, onUploadStart, onUploaded }) {
   return (
     <>
       <div className="header-container">
-        <div
-          className="avatar-circle"
-          onClick={() => setProfileVisible(true)}
-          title="Profile"
+        <button
+          className="logs-badge"
+          style={{ padding: 10, fontSize: 20 }}
+          title="Back"
+          onClick={onBack}
         >
-          {avatarLetter}
-        </div>
-
+          <FaArrowLeft color="white" />
+        </button>
         <div
           className="storage-badge"
           onClick={fetchStorageUsage}
@@ -173,6 +180,13 @@ export default function Header({ user, onSignOut, onUploadStart, onUploaded }) {
         </div>
 
         <FileUploader onUploadStart={onUploadStart} onUploaded={onUploaded} />
+        <div
+          className="avatar-circle"
+          onClick={() => setProfileVisible(true)}
+          title="Profile"
+        >
+          {avatarLetter}
+        </div>
       </div>
 
       {/* Profile Modal */}

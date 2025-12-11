@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
-import { FaEye, FaEyeSlash, FaLock, FaEnvelope } from "react-icons/fa";
+import {
+  FaEye,
+  FaEyeSlash,
+  FaLock,
+  FaEnvelope,
+  FaArrowLeft,
+} from "react-icons/fa";
 import "../App.css";
 
 // Constants for rate limiting
@@ -11,7 +17,7 @@ const LOCKOUT_DURATION_SECONDS = 30;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 6;
 
-export default function Login() {
+export default function Login({ onBack }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -182,6 +188,11 @@ export default function Login() {
           <button type="submit" className="primary-button" disabled={loading}>
             {loading ? "Signing in..." : "Sign In"}
           </button>
+          {onBack && (
+            <button onClick={onBack} className="login-back-btn">
+              Back
+            </button>
+          )}
         </form>
       </div>
     </div>

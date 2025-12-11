@@ -3,7 +3,7 @@ import Header from "./Header";
 import FilesScreen from "./FilesScreen";
 import "../App.css";
 
-export default function MainScreen({ session, onSignOut }) {
+export default function MainScreen({ session, onSignOut, onGoToLanding }) {
   const filesScreenRef = useRef(null);
 
   const handleUploadStart = () => {
@@ -19,6 +19,7 @@ export default function MainScreen({ session, onSignOut }) {
   return (
     <div className="main-screen">
       <Header
+        onBack={onGoToLanding}
         user={session?.user}
         onSignOut={onSignOut}
         onUploadStart={handleUploadStart}
