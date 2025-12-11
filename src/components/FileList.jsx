@@ -294,7 +294,6 @@ export default function FileList({
                     )}
                   </div>
 
-                  {/* Duplicate tag */}
                   {hasDuplicates && (
                     <div
                       className={`duplicate-tag ${

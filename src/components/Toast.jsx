@@ -28,7 +28,7 @@ export const ToastProvider = ({ children }) => {
     (title, message, options = {}) => {
       const id = Date.now().toString();
       const duration = options.duration || 5000;
-      const type = options.type || "success"; // success, error, info
+      const type = options.type || "success";
 
       setToasts((prev) => [...prev, { id, title, message, type, duration }]);
 

@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaArrowLeft, FaClipboard } from "react-icons/fa6";
 import { useToast } from "../Toast";
 import "./Calculator.css";
 
 export default function SiemensRelayThermalOverload({ onBack }) {
+  useEffect(() => {
+    document.title = "Siemens Relay Thermal Overload";
+  }, []);
   const [timeConstant, setTimeConstant] = useState("");
   const [appliedCurrent, setAppliedCurrent] = useState("");
   const [settingCurrent, setSettingCurrent] = useState("");

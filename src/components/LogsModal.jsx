@@ -15,9 +15,9 @@ export default function LogsModal({ visible, onClose }) {
   useLockBodyScroll(visible);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState("ALL"); // ALL | UPLOAD | DELETE | RENAME
+  const [filter, setFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
-  const [displayCount, setDisplayCount] = useState(20); // For pagination
+  const [displayCount, setDisplayCount] = useState(20);
   const [hasMore, setHasMore] = useState(false);
 
   useEffect(() => {
@@ -35,10 +35,8 @@ export default function LogsModal({ visible, onClose }) {
         .select("*")
         .order("created_at", { ascending: false });
 
-      // If there's a search term, fetch ALL logs (no limit)
-      // Otherwise, limit to 1000 for initial display
       if (!searchTerm || searchTerm.trim() === "") {
-        query = query.limit(1000);
+        query = query.limit(5000);
       }
 
       const { data, error } = await query;
@@ -46,13 +44,11 @@ export default function LogsModal({ visible, onClose }) {
       if (error) throw error;
       const logsData = data || [];
 
-      // Collect unique emails
       const emails = logsData
         .map((l) => l.user_email)
         .filter((e) => e && typeof e === "string");
       const uniqueEmails = [...new Set(emails)];
 
-      // Fetch profiles for unique emails
       const profiles = await Promise.all(
         uniqueEmails.map((email) => fetchUserByEmail(email))
       );
@@ -341,7 +337,6 @@ export default function LogsModal({ visible, onClose }) {
         </div>
 
         <div className="logs-modal-content">
-          {/* Search Bar */}
           <div className="logs-search-bar">
             <FaSearch className="logs-search-icon" />
             <input
@@ -361,7 +356,6 @@ export default function LogsModal({ visible, onClose }) {
             )}
           </div>
 
-          {/* Filter Chips */}
           <div className="logs-filter-row">
             <button
               onClick={() => setFilter("ALL")}
@@ -397,7 +391,6 @@ export default function LogsModal({ visible, onClose }) {
             </button>
           </div>
 
-          {/* Logs List */}
           <div className="logs-list">
             {loading ? (
               <div className="logs-loading">

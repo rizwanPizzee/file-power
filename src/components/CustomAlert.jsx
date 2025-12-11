@@ -41,7 +41,7 @@ export default function CustomAlert({
                     } catch (e) {
                       console.warn("alert button handler error", e);
                     }
-                    // Only close if closeOnPress is not explicitly set to false
+
                     if (btn.closeOnPress !== false) {
                       onRequestClose();
                     }

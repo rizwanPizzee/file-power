@@ -1,11 +1,7 @@
 import { useState, useEffect } from "react";
-import { FaCloudBolt, FaCalculator } from "react-icons/fa6";
+import { FaCloudBolt, FaCalculator, FaCircleInfo } from "react-icons/fa6";
 import "./LandingScreen.css";
 
-/**
- * ButtonCard declared outside LandingScreen to avoid creating a component during render.
- * It receives buttonsAnimated so it doesn't rely on outer closure.
- */
 const ButtonCard = ({
   // eslint-disable-next-line no-unused-vars
   icon: Icon,
@@ -29,13 +25,17 @@ const ButtonCard = ({
   );
 };
 
-export default function LandingScreen({ onFilePower, onFormulasPower }) {
+export default function LandingScreen({
+  onFilePower,
+  onFormulasPower,
+  onAbout,
+}) {
   const [logoAnimated, setLogoAnimated] = useState(false);
   const [buttonsAnimated, setButtonsAnimated] = useState(false);
-
   useEffect(() => {
-    // Make the logo animation state update async so we don't synchronously call setState inside effect
-    // requestAnimationFrame runs before paint; it's a common pattern for "start animation after mount"
+    document.title = "Grid Power";
+  }, []);
+  useEffect(() => {
     const rafId = requestAnimationFrame(() => setLogoAnimated(true));
     const timer = setTimeout(() => setButtonsAnimated(true), 100);
 
@@ -71,6 +71,17 @@ export default function LandingScreen({ onFilePower, onFormulasPower }) {
           variant="file-power"
           buttonsAnimated={buttonsAnimated}
         />
+      </div>
+
+      <div
+        className={`landing-about-container ${
+          buttonsAnimated ? "animated" : ""
+        }`}
+      >
+        <button className="about-link-button" onClick={onAbout}>
+          <FaCircleInfo className="about-icon" />
+          <span>About</span>
+        </button>
       </div>
 
       <div className="landing-footer">

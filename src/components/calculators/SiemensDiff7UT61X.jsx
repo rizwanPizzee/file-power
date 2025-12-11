@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FaArrowLeft,
   FaClipboard,
@@ -20,6 +20,9 @@ import { useToast } from "../Toast";
 import "./Calculator.css";
 
 export default function SiemensDiff7UT61X({ onBack }) {
+  useEffect(() => {
+    document.title = "Siemens Diff 7UT61X";
+  }, []);
   const [pickup, setPickup] = useState("");
   const [slope1, setSlope1] = useState("");
   const [point1, setPoint1] = useState("");
@@ -100,7 +103,7 @@ export default function SiemensDiff7UT61X({ onBack }) {
       return;
     }
 
-    // Calculate slope points based on 7UT61X formula
+    //slope points based on 7UT61X formula
     const x0 = 0;
     const y0 = Pickup;
     const x1 = Pickup / Slope1 + Point1;

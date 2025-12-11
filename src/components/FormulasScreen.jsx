@@ -1,5 +1,6 @@
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
 import "./FormulasScreen.css";
+import { useEffect } from "react";
 
 const formulas = [
   {
@@ -37,6 +38,9 @@ const formulas = [
 ];
 
 export default function FormulasScreen({ onBack, onNavigate }) {
+  useEffect(() => {
+    document.title = "P & I Tools";
+  }, []);
   return (
     <div className="formulas-container">
       <div className="formulas-header">

@@ -1,7 +1,5 @@
-/* Import Google Fonts - Inter family for modern typography */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
-/* Global Resets and Base Styles */
 * {
   margin: 0;
   padding: 0;
@@ -21,7 +19,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 5px;
   height: 10px;
@@ -42,7 +39,6 @@ body {
   background: linear-gradient(180deg, #6796d4 0%, #0159cd 100%);
 }
 
-/* Global Animation Classes */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -82,7 +78,6 @@ body {
   }
 }
 
-/* Utility Classes */
 .fade-in {
   animation: fadeIn 0.2s ease-out;
 }

@@ -30,12 +30,10 @@ const FilesScreen = forwardRef((props, ref) => {
   const [sortOrder, setSortOrder] = useState("desc"); // desc or asc
   const [activeDuplicateFileId, setActiveDuplicateFileId] = useState(null);
 
-  // Viewer state
   const [viewerVisible, setViewerVisible] = useState(false);
   const [viewerFile, setViewerFile] = useState(null);
   const [viewerUrl, setViewerUrl] = useState(null);
 
-  // Alert state
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertConfig, setAlertConfig] = useState({
     title: "",
@@ -43,17 +41,14 @@ const FilesScreen = forwardRef((props, ref) => {
     buttons: [],
   });
 
-  // Rename modal state
   const [renameVisible, setRenameVisible] = useState(false);
   const [fileToRename, setFileToRename] = useState(null);
 
-  // Properties modal state
   const [propsVisible, setPropsVisible] = useState(false);
   const [propsFile, setPropsFile] = useState(null);
   const [propsUploader, setPropsUploader] = useState(null);
   const [propsLoading, setPropsLoading] = useState(false);
 
-  // User state
   const [currentUserEmail, setCurrentUserEmail] = useState(null);
 
   useEffect(() => {
@@ -85,14 +80,12 @@ const FilesScreen = forwardRef((props, ref) => {
       if (msg.includes("relation") && msg.includes("does not exist")) {
         msg = "Table 'files' does not exist in Supabase.";
       }
-      // We could show a toast or alert here if we wanted, but console is okay for fetch
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  // Expose handleUploaded to parent via ref
   useImperativeHandle(ref, () => ({
     handleUploaded: (fileRow, publicUrl, tempId, error) => {
       if (error) {
@@ -142,7 +135,6 @@ const FilesScreen = forwardRef((props, ref) => {
   const handleDownload = async (file) => {
     if (downloadingFileId) return; // Prevent multiple downloads
 
-    // Show confirmation modal with file details
     setAlertConfig({
       title: "Download Confirmation",
       message: `File Name: ${file.name}\n\nFile Size: ${formatBytes(
@@ -256,7 +248,6 @@ const FilesScreen = forwardRef((props, ref) => {
             });
 
             try {
-              // Assuming 'files' bucket and file.name or file.path is the path
               const filePath = file.path || file.name;
               const { error: storageError } = await supabase.storage
                 .from(STORAGE_BUCKET)
@@ -271,7 +262,6 @@ const FilesScreen = forwardRef((props, ref) => {
 
               if (dbError) throw dbError;
 
-              // Log the deletion
               try {
                 const { data: userData } = await supabase.auth.getUser();
                 const user = userData?.user;
@@ -289,7 +279,6 @@ const FilesScreen = forwardRef((props, ref) => {
                 console.warn("Failed to log delete action:", logErr);
               }
 
-              // Hide the alert after successful deletion
               setAlertVisible(false);
               fetchFiles();
             } catch (error) {
@@ -342,7 +331,6 @@ const FilesScreen = forwardRef((props, ref) => {
 
       if (error) throw error;
 
-      // Log the rename action
       try {
         await supabase.from("user_file_logs").insert({
           user_id: user?.id,
@@ -441,7 +429,6 @@ const FilesScreen = forwardRef((props, ref) => {
         return;
       }
 
-      // Fetch uploader information
       let uploaderName = "Unknown User";
       try {
         const [activeRes, deletedRes] = await Promise.all([
@@ -491,7 +478,6 @@ const FilesScreen = forwardRef((props, ref) => {
         file.size
       )}\n\nFile Link: ${publicUrl}`;
 
-      // Try Web Share API first
       if (navigator.share) {
         await navigator.share({
           title: `${file.name} - Shared by ${uploaderName}`,
@@ -499,7 +485,6 @@ const FilesScreen = forwardRef((props, ref) => {
           url: publicUrl,
         });
       } else {
-        // Fallback: copy to clipboard
         await navigator.clipboard.writeText(shareMessage);
         setAlertConfig({
           title: "Copied to Clipboard",
@@ -546,11 +531,8 @@ const FilesScreen = forwardRef((props, ref) => {
     return list;
   }, [files, searchQuery, sortOrder]);
 
-  // Detect duplicate files based on base name
   const duplicatesMap = useMemo(() => {
     const getBaseName = (filename) => {
-      // Remove timestamp suffix like " (1234567890)" from filename
-      // Match pattern: filename (digits).ext or filename (digits) without extension
       return filename.replace(/\s*\(\d+\)(\.[^.]+)?$/, "$1");
     };
 
@@ -564,15 +546,13 @@ const FilesScreen = forwardRef((props, ref) => {
       groups[baseName].push(file);
     });
 
-    // Only keep groups with more than 1 file (actual duplicates)
     const duplicates = {};
     Object.keys(groups).forEach((baseName) => {
       if (groups[baseName].length > 1) {
-        // Sort the group by uploaded_at to assign consistent indices
         const sortedGroup = [...groups[baseName]].sort(
           (a, b) => new Date(a.uploaded_at) - new Date(b.uploaded_at)
         );
-        // For each file in this group, store its index (1-based) and other duplicates
+
         sortedGroup.forEach((file, index) => {
           duplicates[file.id] = {
             index: index + 1, // 1-based index

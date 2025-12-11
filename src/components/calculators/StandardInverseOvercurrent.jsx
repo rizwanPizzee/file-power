@@ -1,9 +1,12 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FaArrowLeft, FaClipboard } from "react-icons/fa6";
 import { useToast } from "../Toast";
 import "./Calculator.css";
 
 export default function StandardInverseOvercurrent({ onBack }) {
+  useEffect(() => {
+    document.title = "Standard Inverse Overcurrent";
+  }, []);
   const [pickupCurrent, setPickupCurrent] = useState("");
   const [timeDial, setTimeDial] = useState("");
   const [appliedCurrent, setAppliedCurrent] = useState("");

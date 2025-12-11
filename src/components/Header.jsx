@@ -189,7 +189,6 @@ export default function Header({
         </div>
       </div>
 
-      {/* Profile Modal */}
       {profileVisible && (
         <div className="modal-overlay">
           <div className="modal-box profile-modal">
@@ -236,7 +235,6 @@ export default function Header({
                 </p>
               </div>
 
-              {/* Additional User Information */}
               <div className="user-info-section">
                 <div className="info-item">
                   <span className="info-label">Age</span>
@@ -296,7 +294,6 @@ export default function Header({
         onRequestClose={() => setAlertVisible(false)}
       />
 
-      {/* Logs Modal */}
       <LogsModal visible={logsVisible} onClose={() => setLogsVisible(false)} />
     </>
   );

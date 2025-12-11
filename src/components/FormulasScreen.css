@@ -1,7 +1,3 @@
-/* ============================================
-   FORMULAS SCREEN STYLES
-   ============================================ */
-
 .formulas-container {
   min-height: 100vh;
   background: linear-gradient(to bottom, #14293d, #0e4a79);
@@ -60,7 +56,6 @@
   width: 36px;
 }
 
-/* Grid Layout */
 .formulas-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -84,7 +79,6 @@
   }
 }
 
-/* Formula Card */
 .formula-card {
   background: linear-gradient(145deg, #1a3a52, #214464);
   border: 1px solid #3a6276;
@@ -109,7 +103,6 @@
   transform: translateY(-2px) scale(1.01);
 }
 
-/* Image Container */
 .formula-image-container {
   width: 100%;
   height: 150px;
@@ -134,7 +127,6 @@
   transition: transform 0.3s ease, filter 0.3s ease;
 }
 
-/* Content Section */
 .formula-content {
   padding: 16px 18px;
   display: flex;
@@ -167,7 +159,6 @@
   transform: translateX(10px);
 }
 
-/* Legacy styles (kept for compatibility) */
 .formula-icon {
   width: 48px;
   height: 48px;

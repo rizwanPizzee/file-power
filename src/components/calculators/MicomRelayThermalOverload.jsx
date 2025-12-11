@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaArrowLeft, FaClipboard } from "react-icons/fa6";
 import { useToast } from "../Toast";
 import "./Calculator.css";
 
 export default function MicomRelayThermalOverload({ onBack }) {
+  useEffect(() => {
+    document.title = "Micom Relay Thermal Overload";
+  }, []);
   const [thermalTimeConstant, setThermalTimeConstant] = useState("");
   const [appliedCurrent, setAppliedCurrent] = useState("");
   const [iTheta, setITheta] = useState("");

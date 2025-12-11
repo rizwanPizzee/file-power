@@ -17,7 +17,7 @@ export default function RenameModal({ visible, file, onClose, onSave }) {
         ext = parts.pop();
         base = parts.join(".");
       }
-      // Use setTimeout to avoid cascading renders
+
       setTimeout(() => {
         setNewName(base);
         setExtension(ext);

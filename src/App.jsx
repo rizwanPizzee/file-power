@@ -12,13 +12,16 @@ import {
   SiemensDiff7UT61X,
   Siemens7UT86Slope,
 } from "./components/calculators";
+import AboutPage from "./components/AboutPage";
 import { ToastProvider } from "./components/Toast";
 import "./App.css";
 
 function App() {
   const [session, setSession] = useState(null);
-  const [screen, setScreen] = useState("landing"); // landing | formulas | filePower | calculator screens
-
+  const [screen, setScreen] = useState("landing");
+  useEffect(() => {
+    document.title = "Grid Power";
+  }, []);
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -53,7 +56,6 @@ function App() {
     setScreen("formulas");
   };
 
-  // Render based on current screen
   const renderScreen = () => {
     switch (screen) {
       case "landing":
@@ -61,6 +63,7 @@ function App() {
           <LandingScreen
             onFilePower={handleFilePower}
             onFormulasPower={handleFormulasPower}
+            onAbout={() => setScreen("about")}
           />
         );
 
@@ -101,11 +104,15 @@ function App() {
       case "siemens7UT86Slope":
         return <Siemens7UT86Slope onBack={handleBackToFormulas} />;
 
+      case "about":
+        return <AboutPage onBack={handleBackToLanding} />;
+
       default:
         return (
           <LandingScreen
             onFilePower={handleFilePower}
             onFormulasPower={handleFormulasPower}
+            onAbout={() => setScreen("about")}
           />
         );
     }

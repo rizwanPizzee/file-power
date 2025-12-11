@@ -29,10 +29,8 @@ const FileUploader = ({ onUploaded, onUploadStart }) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Reset input so same file can be selected again if needed
     event.target.value = "";
 
-    // Check file size limit
     if (file.size > MAX_FILE_SIZE_BYTES) {
       setAlert({
         title: "File Too Large",
@@ -60,7 +58,7 @@ const FileUploader = ({ onUploaded, onUploadStart }) => {
       name: file.name,
       size: file.size,
       mimeType: file.type,
-      uri: file, // In web, the file object itself is used
+      uri: file,
     };
 
     try {
@@ -144,7 +142,7 @@ const FileUploader = ({ onUploaded, onUploadStart }) => {
     let tempId;
     try {
       setUploading(true);
-      setAlert(null); // Close confirmation alert
+      setAlert(null);
 
       const { data: userData } = await supabase.auth.getUser();
       const user = userData?.user;
@@ -160,12 +158,10 @@ const FileUploader = ({ onUploaded, onUploadStart }) => {
 
       tempId = `tmp-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-      // Notify parent about upload start
       if (onUploadStart) {
         onUploadStart({ id: tempId, name: fileMeta.name });
       }
 
-      // Create AbortController for cancellation
       abortControllerRef.current = new AbortController();
 
       let filename = fileMeta.name;
@@ -195,7 +191,6 @@ const FileUploader = ({ onUploaded, onUploadStart }) => {
 
       if (error) throw error;
 
-      // Get public URL (optional, depending on bucket privacy)
       const {
         data: { publicUrl },
       } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(filePath);
@@ -218,8 +213,7 @@ const FileUploader = ({ onUploaded, onUploadStart }) => {
 
       if (dbError) {
         console.error("Database operation failed:", dbError);
-        // Try to remove the uploaded file from storage since DB insert failed
-        // Only if it was a NEW file (to avoid deleting replaced file if DB update fails)
+
         if (mode !== "replace") {
           try {
             await supabase.storage.from(STORAGE_BUCKET).remove([filePath]);
@@ -273,9 +267,9 @@ const FileUploader = ({ onUploaded, onUploadStart }) => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-    // Since we can't easily cancel the Supabase promise, we force state reset
+
     setUploading(false);
-    // We might want to show a toast
+
     toast.show("Upload Cancelled", "The file upload was cancelled.");
   };
 
