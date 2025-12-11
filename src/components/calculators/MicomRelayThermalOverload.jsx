@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FaArrowLeft, FaClipboard } from "react-icons/fa6";
 import { useToast } from "../Toast";
 import "./Calculator.css";
@@ -24,6 +24,24 @@ export default function MicomRelayThermalOverload({ onBack }) {
   });
 
   const { showToast } = useToast();
+
+  const thermalRef = useRef(null);
+  const appliedRef = useRef(null);
+  const iThetaRef = useRef(null);
+  const kRef = useRef(null);
+  const rcaRef = useRef(null);
+  const thetaTripRef = useRef(null);
+
+  const handleKeyDown = (e, nextRef) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (nextRef) {
+        nextRef.current?.focus();
+      } else {
+        calculateThermalOverload();
+      }
+    }
+  };
 
   const calculateThermalOverload = () => {
     const fields = [
@@ -153,6 +171,8 @@ export default function MicomRelayThermalOverload({ onBack }) {
             placeholder="Enter Thermal Time Constant"
             value={thermalTimeConstant}
             onChange={updateField(setThermalTimeConstant, "thermal")}
+            ref={thermalRef}
+            onKeyDown={(e) => handleKeyDown(e, appliedRef)}
           />
         </div>
 
@@ -166,6 +186,8 @@ export default function MicomRelayThermalOverload({ onBack }) {
             placeholder="Enter Applied Current"
             value={appliedCurrent}
             onChange={updateField(setAppliedCurrent, "applied")}
+            ref={appliedRef}
+            onKeyDown={(e) => handleKeyDown(e, iThetaRef)}
           />
         </div>
 
@@ -179,6 +201,8 @@ export default function MicomRelayThermalOverload({ onBack }) {
             placeholder="Enter Setting Current"
             value={iTheta}
             onChange={updateField(setITheta, "iTheta")}
+            ref={iThetaRef}
+            onKeyDown={(e) => handleKeyDown(e, kRef)}
           />
         </div>
 
@@ -190,6 +214,8 @@ export default function MicomRelayThermalOverload({ onBack }) {
             placeholder="Enter K"
             value={k}
             onChange={updateField(setK, "k")}
+            ref={kRef}
+            onKeyDown={(e) => handleKeyDown(e, rcaRef)}
           />
         </div>
 
@@ -203,6 +229,8 @@ export default function MicomRelayThermalOverload({ onBack }) {
             placeholder="Percentage of Heating"
             value={rcaPresentThermalState}
             onChange={updateField(setRcaPresentThermalState, "rca")}
+            ref={rcaRef}
+            onKeyDown={(e) => handleKeyDown(e, thetaTripRef)}
           />
         </div>
 
@@ -216,6 +244,8 @@ export default function MicomRelayThermalOverload({ onBack }) {
             placeholder="Enter Theta Trip"
             value={thetaTrip}
             onChange={updateField(setThetaTrip, "thetaTrip")}
+            ref={thetaTripRef}
+            onKeyDown={(e) => handleKeyDown(e, null)}
           />
         </div>
 

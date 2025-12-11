@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FaArrowLeft, FaClipboard } from "react-icons/fa6";
 import { useToast } from "../Toast";
 import "./Calculator.css";
@@ -22,6 +22,23 @@ export default function SiemensRelayThermalOverload({ onBack }) {
   });
 
   const { showToast } = useToast();
+
+  const timeConstantRef = useRef(null);
+  const appliedRef = useRef(null);
+  const settingRef = useRef(null);
+  const kRef = useRef(null);
+  const preloadRef = useRef(null);
+
+  const handleKeyDown = (e, nextRef) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (nextRef) {
+        nextRef.current?.focus();
+      } else {
+        calculateThermalOverload();
+      }
+    }
+  };
 
   const calculateThermalOverload = () => {
     const fields = [
@@ -149,6 +166,8 @@ export default function SiemensRelayThermalOverload({ onBack }) {
             placeholder="Setting value in seconds"
             value={timeConstant}
             onChange={updateField(setTimeConstant, "timeConstant")}
+            ref={timeConstantRef}
+            onKeyDown={(e) => handleKeyDown(e, appliedRef)}
           />
         </div>
 
@@ -162,6 +181,8 @@ export default function SiemensRelayThermalOverload({ onBack }) {
             placeholder="Test current in Ampere"
             value={appliedCurrent}
             onChange={updateField(setAppliedCurrent, "applied")}
+            ref={appliedRef}
+            onKeyDown={(e) => handleKeyDown(e, settingRef)}
           />
         </div>
 
@@ -175,6 +196,8 @@ export default function SiemensRelayThermalOverload({ onBack }) {
             placeholder="Setting value in Ampere"
             value={settingCurrent}
             onChange={updateField(setSettingCurrent, "setting")}
+            ref={settingRef}
+            onKeyDown={(e) => handleKeyDown(e, kRef)}
           />
         </div>
 
@@ -186,6 +209,8 @@ export default function SiemensRelayThermalOverload({ onBack }) {
             placeholder="Setting value of K"
             value={k}
             onChange={updateField(setK, "k")}
+            ref={kRef}
+            onKeyDown={(e) => handleKeyDown(e, preloadRef)}
           />
         </div>
 
@@ -199,6 +224,8 @@ export default function SiemensRelayThermalOverload({ onBack }) {
             placeholder="Percentage of Heating"
             value={preloadCurrent}
             onChange={updateField(setPreloadCurrent, "preload")}
+            ref={preloadRef}
+            onKeyDown={(e) => handleKeyDown(e, null)}
           />
         </div>
 

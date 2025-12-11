@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   FaArrowLeft,
   FaClipboard,
@@ -42,6 +42,24 @@ export default function SiemensDiff7UT61X({ onBack }) {
   });
 
   const { showToast } = useToast();
+
+  const pickupRef = useRef(null);
+  const slope1Ref = useRef(null);
+  const point1Ref = useRef(null);
+  const slope2Ref = useRef(null);
+  const point2Ref = useRef(null);
+  const highsetRef = useRef(null);
+
+  const handleKeyDown = (e, nextRef) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (nextRef) {
+        nextRef.current?.focus();
+      } else {
+        calculateSlope();
+      }
+    }
+  };
 
   const DEFAULT_ZOOM = 1;
   const MIN_ZOOM = 0.5;
@@ -185,6 +203,8 @@ export default function SiemensDiff7UT61X({ onBack }) {
             placeholder="Enter Setting values"
             value={pickup}
             onChange={updateField(setPickup, "pickup")}
+            ref={pickupRef}
+            onKeyDown={(e) => handleKeyDown(e, slope1Ref)}
           />
         </div>
 
@@ -198,6 +218,8 @@ export default function SiemensDiff7UT61X({ onBack }) {
             placeholder="Enter Setting Value"
             value={slope1}
             onChange={updateField(setSlope1, "slope1")}
+            ref={slope1Ref}
+            onKeyDown={(e) => handleKeyDown(e, point1Ref)}
           />
         </div>
 
@@ -211,6 +233,8 @@ export default function SiemensDiff7UT61X({ onBack }) {
             placeholder="Enter Setting value"
             value={point1}
             onChange={updateField(setPoint1, "point1")}
+            ref={point1Ref}
+            onKeyDown={(e) => handleKeyDown(e, slope2Ref)}
           />
         </div>
 
@@ -224,6 +248,8 @@ export default function SiemensDiff7UT61X({ onBack }) {
             placeholder="Enter Setting Value"
             value={slope2}
             onChange={updateField(setSlope2, "slope2")}
+            ref={slope2Ref}
+            onKeyDown={(e) => handleKeyDown(e, point2Ref)}
           />
         </div>
 
@@ -237,6 +263,8 @@ export default function SiemensDiff7UT61X({ onBack }) {
             placeholder="Enter Setting Value"
             value={point2}
             onChange={updateField(setPoint2, "point2")}
+            ref={point2Ref}
+            onKeyDown={(e) => handleKeyDown(e, highsetRef)}
           />
         </div>
 
@@ -250,6 +278,8 @@ export default function SiemensDiff7UT61X({ onBack }) {
             placeholder="Enter Setting Value"
             value={highset}
             onChange={updateField(setHighset, "highset")}
+            ref={highsetRef}
+            onKeyDown={(e) => handleKeyDown(e, null)}
           />
         </div>
 

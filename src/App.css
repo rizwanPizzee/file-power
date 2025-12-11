@@ -932,7 +932,7 @@ body {
   gap: 4px;
   opacity: 0;
   transition: opacity var(--transition-base);
-  background: rgba(20, 41, 61, 0.95);
+  background: rgba(28, 58, 87, 0.95);
   padding: 0;
   border-radius: 4px;
   backdrop-filter: blur(8px);
@@ -943,6 +943,15 @@ body {
 .file-grid-actions:hover,
 .file-grid-actions.active {
   opacity: 1;
+}
+
+/* Show More Options button always on smaller screens (< 1200px) */
+@media (max-width: 1199px) {
+  .file-grid-actions {
+    opacity: 1;
+    background: rgba(20, 41, 61, 0);
+    backdrop-filter: blur(0px);
+  }
 }
 
 .action-btn {

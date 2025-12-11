@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { FaArrowLeft, FaClipboard } from "react-icons/fa6";
 import { useToast } from "../Toast";
 import "./Calculator.css";
@@ -14,6 +14,20 @@ export default function ImpedanceToReactance({ onBack }) {
   });
 
   const { showToast } = useToast();
+
+  const zRef = useRef(null);
+  const thetaRef = useRef(null);
+
+  const handleKeyDown = (e, nextRef) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (nextRef) {
+        nextRef.current?.focus();
+      } else {
+        calculate();
+      }
+    }
+  };
 
   const calculate = () => {
     const newErrors = {
@@ -98,6 +112,8 @@ export default function ImpedanceToReactance({ onBack }) {
             placeholder="Enter Impedance (Z)"
             value={z}
             onChange={updateField(setZ, "z")}
+            ref={zRef}
+            onKeyDown={(e) => handleKeyDown(e, thetaRef)}
           />
         </div>
 
@@ -111,6 +127,8 @@ export default function ImpedanceToReactance({ onBack }) {
             placeholder="Enter Angle"
             value={theta}
             onChange={updateField(setTheta, "theta")}
+            ref={thetaRef}
+            onKeyDown={(e) => handleKeyDown(e, null)}
           />
         </div>
 
