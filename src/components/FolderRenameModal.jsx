@@ -66,7 +66,9 @@ export default function FolderRenameModal({
           <div className="input-with-icon">
             <input
               type="text"
-              className={`modal-input ${warning ? "input-error" : ""}`}
+              className={`modal-input ${
+                warning ? "input-error" : ""
+              } modal-input-rename`}
               value={newName}
               onChange={(e) => handleNameChange(e.target.value)}
               placeholder="Folder name"
@@ -76,7 +78,6 @@ export default function FolderRenameModal({
                 if (e.key === "Enter") handleRename();
                 if (e.key === "Escape") onClose();
               }}
-              style={{ paddingLeft: "0px" }}
             />
           </div>
 

@@ -899,8 +899,32 @@ const FilesScreen = forwardRef((props, ref) => {
             ""
           ).toLowerCase();
 
+          let dateStr = "";
+          if (item.uploaded_at || item.created_at) {
+            const d = new Date(item.uploaded_at || item.created_at);
+            // Match standard format (e.g. 12/16/2024)
+            const standard = d.toLocaleDateString().toLowerCase();
+            // Match folder display format (e.g. Dec 16)
+            const folderFormat = d
+              .toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+              })
+              .toLowerCase();
+            // Match full month name (e.g. December)
+            const longMonth = d
+              .toLocaleDateString(undefined, {
+                month: "long",
+              })
+              .toLowerCase();
+
+            dateStr = `${standard} ${folderFormat} ${longMonth}`;
+          }
+
           return (
-            name.includes(normalizedQuery) || email.includes(normalizedQuery)
+            name.includes(normalizedQuery) ||
+            email.includes(normalizedQuery) ||
+            dateStr.includes(normalizedQuery)
           );
         })
       : combinedList;
@@ -919,6 +943,7 @@ const FilesScreen = forwardRef((props, ref) => {
 
   const duplicatesMap = useMemo(() => {
     const getBaseName = (filename) => {
+      // Remove (1), (2) etc. from the end of the filename
       return filename.replace(/\s*\(\d+\)(\.[^.]+)?$/, "$1");
     };
 
@@ -960,7 +985,7 @@ const FilesScreen = forwardRef((props, ref) => {
           <FaSearch className="search-icon-search" />
           <input
             type="text"
-            placeholder="Search files..."
+            placeholder="Search files (name, email, date)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setIsSearchFocused(true)}
@@ -1002,10 +1027,11 @@ const FilesScreen = forwardRef((props, ref) => {
 
       {/* Search Scope Toggle - only at root */}
       {currentFolderId === null &&
-        (searchQuery.length > 0 ||
-          isSearchFocused ||
-          searchScope === "All") && (
-          <div className="scope-container">
+        (searchQuery.length > 0 || isSearchFocused) && (
+          <div
+            className="scope-container"
+            onMouseDown={(e) => e.preventDefault()}
+          >
             <button
               className={`scope-btn ${
                 searchScope === "Current" ? "active" : ""

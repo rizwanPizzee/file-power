@@ -145,7 +145,7 @@ export default function Login({ onBack }) {
         {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleLogin}>
           <div className="input-group">
-            <FaEnvelope className="input-icon" />
+            <FaEnvelope className="input-icon" color="#ebebebff" />
             <input
               type="email"
               placeholder="Email"
@@ -156,7 +156,7 @@ export default function Login({ onBack }) {
             />
           </div>
           <div className="input-group">
-            <FaLock className="input-icon" />
+            <FaLock className="input-icon" color="#ebebebff" />
             <input
               type={secureTextEntry ? "password" : "text"}
               placeholder="Password"

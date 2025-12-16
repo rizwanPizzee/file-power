@@ -44,7 +44,7 @@ export default function DeleteFolderModal({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-box delete-modal">
+      <div className="modal-box delete-modal" style={{ padding: 0 }}>
         {step === "deleting" ? (
           <div className="modal-content-center">
             <FaSpinner className="spinner large-spinner" />

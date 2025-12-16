@@ -280,6 +280,8 @@ export default function Header({
                       alignItems: "center",
                       textAlign: "center",
                       width: "100%",
+                      padding: "12px 16px",
+                      fontSize: "1rem",
                     }}
                   >
                     <span className="menu-label">{item.label}</span>
