@@ -985,7 +985,7 @@ const FilesScreen = forwardRef((props, ref) => {
           <FaSearch className="search-icon-search" />
           <input
             type="text"
-            placeholder="Search files (name, email, date)..."
+            placeholder="Search files..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setIsSearchFocused(true)}
