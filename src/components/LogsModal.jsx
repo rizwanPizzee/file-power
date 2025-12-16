@@ -7,9 +7,19 @@ import {
   FaPencilAlt,
   FaSearch,
   FaTimes as FaClear,
+  FaFolder,
+  FaArrowsAlt,
+  FaHistory,
+  FaChevronDown,
+  FaFilter,
+  FaClock,
+  FaUser,
+  FaFile,
+  FaChevronRight,
 } from "react-icons/fa";
 import useLockBodyScroll from "../hooks/useLockBodyScroll";
-import "../App.css";
+import "./LogsModal.css";
+import LogsSkeleton from "./LogsSkeleton";
 
 export default function LogsModal({ visible, onClose }) {
   useLockBodyScroll(visible);
@@ -19,6 +29,7 @@ export default function LogsModal({ visible, onClose }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [displayCount, setDisplayCount] = useState(20);
   const [hasMore, setHasMore] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -139,7 +150,26 @@ export default function LogsModal({ visible, onClose }) {
     const uploads = logs.filter((l) => l.action === "UPLOAD").length;
     const deletes = logs.filter((l) => l.action === "DELETE").length;
     const renames = logs.filter((l) => l.action === "RENAME").length;
-    return { total, uploads, deletes, renames };
+    const createFolders = logs.filter(
+      (l) => l.action === "CREATE_FOLDER"
+    ).length;
+    const moves = logs.filter((l) => l.action === "MOVE").length;
+    const renameFolders = logs.filter(
+      (l) => l.action === "RENAME_FOLDER"
+    ).length;
+    const deleteFolders = logs.filter(
+      (l) => l.action === "DELETE_FOLDER"
+    ).length;
+    return {
+      total,
+      uploads,
+      deletes,
+      renames,
+      createFolders,
+      moves,
+      renameFolders,
+      deleteFolders,
+    };
   }, [logs]);
 
   const filteredLogs = useMemo(() => {
@@ -147,6 +177,13 @@ export default function LogsModal({ visible, onClose }) {
     if (filter === "UPLOAD") return logs.filter((l) => l.action === "UPLOAD");
     if (filter === "DELETE") return logs.filter((l) => l.action === "DELETE");
     if (filter === "RENAME") return logs.filter((l) => l.action === "RENAME");
+    if (filter === "CREATE_FOLDER")
+      return logs.filter((l) => l.action === "CREATE_FOLDER");
+    if (filter === "MOVE") return logs.filter((l) => l.action === "MOVE");
+    if (filter === "RENAME_FOLDER")
+      return logs.filter((l) => l.action === "RENAME_FOLDER");
+    if (filter === "DELETE_FOLDER")
+      return logs.filter((l) => l.action === "DELETE_FOLDER");
     return logs;
   }, [logs, filter]);
 
@@ -161,6 +198,7 @@ export default function LogsModal({ visible, onClose }) {
     const action = (item.action || "").toString().toLowerCase();
     const oldFileName = (item.old_file_name || "").toString().toLowerCase();
     const newFileName = (item.new_file_name || "").toString().toLowerCase();
+    const filePath = (item.file_path || "").toString().toLowerCase();
 
     // Add date/time search support
     let dateStrings = "";
@@ -183,7 +221,7 @@ export default function LogsModal({ visible, onClose }) {
       dateStrings = `${ddmmyyyy} ${mmddyyyy} ${yyyymmdd} ${localeDate} ${localeTime} ${localeDateTime}`;
     }
 
-    const anyText = `${fileName} ${userEmail} ${userName} ${fileType} ${action} ${oldFileName} ${newFileName} ${dateStrings}`;
+    const anyText = `${fileName} ${userEmail} ${userName} ${fileType} ${action} ${oldFileName} ${newFileName} ${filePath} ${dateStrings}`;
 
     return anyText.indexOf(qq) !== -1;
   };
@@ -222,20 +260,141 @@ export default function LogsModal({ visible, onClose }) {
     setDisplayCount((prev) => prev + 20);
   };
 
-  const renderLogItem = (item, index) => {
-    const isDelete = item.action === "DELETE";
-    const isRename = item.action === "RENAME";
-
-    let color = "#4caf50"; // green for upload
-    let IconComponent = FaCloudUploadAlt;
-
-    if (isDelete) {
-      color = "#f44336";
-      IconComponent = FaTrash;
-    } else if (isRename) {
-      color = "#ff9800";
-      IconComponent = FaPencilAlt;
+  const getActionConfig = (action) => {
+    switch (action) {
+      case "UPLOAD":
+        return {
+          color: "#4caf50",
+          bgColor: "rgba(76, 175, 80, 0.15)",
+          Icon: FaCloudUploadAlt,
+          label: "Uploaded",
+        };
+      case "DELETE":
+        return {
+          color: "#f44336",
+          bgColor: "rgba(244, 67, 54, 0.15)",
+          Icon: FaTrash,
+          label: "Deleted",
+        };
+      case "RENAME":
+        return {
+          color: "#ff9800",
+          bgColor: "rgba(255, 152, 0, 0.15)",
+          Icon: FaPencilAlt,
+          label: "Renamed",
+        };
+      case "CREATE_FOLDER":
+        return {
+          color: "#2196f3",
+          bgColor: "rgba(33, 150, 243, 0.15)",
+          Icon: FaFolder,
+          label: "Created Folder",
+        };
+      case "MOVE":
+        return {
+          color: "#9c27b0",
+          bgColor: "rgba(156, 39, 176, 0.15)",
+          Icon: FaArrowsAlt,
+          label: "Moved",
+        };
+      case "RENAME_FOLDER":
+        return {
+          color: "#00bcd4",
+          bgColor: "rgba(0, 188, 212, 0.15)",
+          Icon: FaFolder,
+          label: "Renamed Folder",
+        };
+      case "DELETE_FOLDER":
+        return {
+          color: "#e91e63",
+          bgColor: "rgba(233, 30, 99, 0.15)",
+          Icon: FaFolder,
+          label: "Deleted Folder",
+        };
+      default:
+        return {
+          color: "#4caf50",
+          bgColor: "rgba(76, 175, 80, 0.15)",
+          Icon: FaCloudUploadAlt,
+          label: action,
+        };
     }
+  };
+
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return "Today";
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return "Yesterday";
+    } else {
+      return date.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year:
+          date.getFullYear() !== today.getFullYear() ? "numeric" : undefined,
+      });
+    }
+  };
+
+  // Helper function to extract folder name from path
+  // Handles both old path format (uuid/folder/file) and new format (folder name directly)
+  const getFolderNameFromPath = (filePath) => {
+    if (!filePath) return "Root";
+    if (filePath === "root" || filePath === "Root") return "Root";
+
+    // If it's a simple folder name (no slashes), return it
+    if (!filePath.includes("/")) {
+      return filePath;
+    }
+
+    // Try to extract folder name from path structure
+    // Old format might be: user_id/folder_name/filename or folder_name/filename
+    const parts = filePath.split("/").filter(Boolean);
+
+    // If we have 2+ parts and the last part looks like a filename (has extension)
+    if (parts.length >= 2) {
+      const lastPart = parts[parts.length - 1];
+      // Check if last part appears to be a filename
+      if (lastPart.includes(".")) {
+        // Return the second-to-last part as folder name
+        return parts[parts.length - 2] || "Root";
+      }
+    }
+
+    // Return the last part or Root
+    return parts[parts.length - 1] || "Root";
+  };
+
+  const renderLogItem = (item, index) => {
+    const {
+      color,
+      bgColor,
+      Icon: IconComponent,
+      label,
+    } = getActionConfig(item.action);
+
+    const isRename = item.action === "RENAME";
+    const isRenameFolder = item.action === "RENAME_FOLDER";
+    const isMove = item.action === "MOVE";
+    const isCreateFolder = item.action === "CREATE_FOLDER";
+    const isDeleteFolder = item.action === "DELETE_FOLDER";
+    const isUpload = item.action === "UPLOAD";
+    const isDelete = item.action === "DELETE";
 
     const showDateHeader = (() => {
       if (index === 0) return true;
@@ -247,63 +406,179 @@ export default function LogsModal({ visible, onClose }) {
     })();
 
     return (
-      <div key={item.id || index}>
+      <div key={item.id || index} className="timeline-item-wrapper">
         {showDateHeader && (
-          <div className="logs-date-header">
-            <span className="logs-date-header-text">
-              {new Date(item.created_at).toLocaleDateString()}
-            </span>
+          <div className="timeline-date-header">
+            <div className="timeline-date-badge">
+              <FaClock size={12} />
+              <span>{formatDate(item.created_at)}</span>
+            </div>
           </div>
         )}
 
-        <div className="logs-row">
-          <div className="logs-icon-box" style={{ backgroundColor: color }}>
-            <IconComponent size={16} color="#fff" />
+        <div className="timeline-item">
+          {/* Timeline connector */}
+          <div className="timeline-connector">
+            <div
+              className="timeline-dot"
+              style={{
+                backgroundColor: color,
+                boxShadow: `0 0 12px ${color}40`,
+              }}
+            >
+              <IconComponent size={12} color="#fff" />
+            </div>
+            <div
+              className="timeline-line"
+              style={{ backgroundColor: `${color}30` }}
+            ></div>
           </div>
 
-          <div className="logs-content">
-            <div className="logs-header">
-              <span className="logs-user-name">
-                {item.user_name || item.user_email || "Unknown"}
-              </span>
+          {/* Card content */}
+          <div className="timeline-card" style={{ "--accent-color": color }}>
+            {/* Card Header */}
+            <div className="timeline-card-header">
+              <div className="timeline-user-info">
+                <div
+                  className="timeline-avatar"
+                  style={{ backgroundColor: bgColor }}
+                >
+                  <FaUser size={10} color={color} />
+                </div>
+                <span className="timeline-username">
+                  {item.user_name || item.user_email || "Unknown"}
+                </span>
+              </div>
+              <div className="timeline-time">
+                <FaClock size={10} />
+                <span>{formatTime(item.created_at)}</span>
+              </div>
             </div>
 
+            {/* Action Badge */}
             <div
-              className="logs-action-badge"
-              style={{ backgroundColor: color }}
+              className="timeline-action-badge"
+              style={{ backgroundColor: bgColor, color: color }}
             >
-              <span className="logs-action-text">
-                File {item.action} at{" "}
-                <span className="logs-time">
-                  {new Date(item.created_at).toLocaleTimeString("en-US", {
-                    hour: "numeric",
-                    minute: "2-digit",
-                    hour12: true,
-                  })}
-                </span>
-              </span>
+              <IconComponent size={12} />
+              <span>{label}</span>
             </div>
 
-            <div className="logs-file-row">
-              {isRename && item.old_file_name && item.new_file_name ? (
-                <span className="logs-file-name">
-                  <span style={{ color: "#9aa7b2" }}>{item.old_file_name}</span>
-                  <span style={{ color: "#fff" }}> → </span>
-                  <span style={{ color: "#fff", fontWeight: "700" }}>
-                    {item.new_file_name}
-                  </span>
-                </span>
+            {/* Details Section */}
+            <div className="timeline-details">
+              {(isRename || isRenameFolder) &&
+              item.old_file_name &&
+              item.new_file_name ? (
+                <div className="timeline-rename-info">
+                  <div className="rename-flow">
+                    <span className="rename-old">{item.old_file_name}</span>
+                    <FaChevronRight size={10} className="rename-arrow" />
+                    <span className="rename-new">{item.new_file_name}</span>
+                  </div>
+                </div>
+              ) : isMove ? (
+                <div className="timeline-move-info">
+                  <div className="move-file-name">
+                    <FaFile size={11} />
+                    <span>{item.file_name || "–"}</span>
+                  </div>
+                  <div className="move-path-flow">
+                    <span className="path-badge from">
+                      {item.old_file_name === "root"
+                        ? "Root"
+                        : item.old_file_name || "Root"}
+                    </span>
+                    <FaChevronRight size={10} className="path-arrow" />
+                    <span className="path-badge to">
+                      {item.new_file_name === "root"
+                        ? "Root"
+                        : item.new_file_name || "Root"}
+                    </span>
+                  </div>
+                </div>
+              ) : isCreateFolder ? (
+                <div className="timeline-folder-info">
+                  <div className="folder-name-row">
+                    <FaFolder size={12} color="#2196f3" />
+                    <span className="folder-name">{item.file_name || "–"}</span>
+                  </div>
+                  <div className="folder-location">
+                    <span className="location-label">In</span>
+                    <span
+                      className="location-value"
+                      style={{ color: "#2196f3" }}
+                    >
+                      {item.file_path === "root"
+                        ? "Root"
+                        : item.file_path || "Root"}
+                    </span>
+                  </div>
+                </div>
+              ) : isDeleteFolder ? (
+                <div className="timeline-folder-info">
+                  <div className="folder-name-row">
+                    <FaFolder size={12} color="#e91e63" />
+                    <span className="folder-name">{item.file_name || "–"}</span>
+                  </div>
+                  <div className="folder-location">
+                    <span className="location-label">Was in</span>
+                    <span
+                      className="location-value"
+                      style={{ color: "#e91e63" }}
+                    >
+                      {item.file_path === "root"
+                        ? "Root"
+                        : item.file_path || "Root"}
+                    </span>
+                  </div>
+                </div>
+              ) : isDelete ? (
+                <div className="timeline-file-info">
+                  <div className="file-name-row">
+                    <FaFile size={11} />
+                    <span className="file-name">{item.file_name || "–"}</span>
+                  </div>
+                  <div className="file-location">
+                    <span className="location-label">Was in</span>
+                    <span
+                      className="location-value"
+                      style={{ color: "#f44336" }}
+                    >
+                      {getFolderNameFromPath(item.file_path)}
+                    </span>
+                  </div>
+                </div>
+              ) : isUpload ? (
+                <div className="timeline-file-info">
+                  <div className="file-name-row">
+                    <FaFile size={11} />
+                    <span className="file-name">{item.file_name || "–"}</span>
+                  </div>
+                  <div className="file-location">
+                    <span className="location-label">To</span>
+                    <span
+                      className="location-value"
+                      style={{ color: "#4caf50" }}
+                    >
+                      {getFolderNameFromPath(item.file_path)}
+                    </span>
+                  </div>
+                </div>
               ) : (
-                <span className="logs-file-name">{item.file_name || "–"}</span>
+                <div className="timeline-file-info">
+                  <div className="file-name-row">
+                    <FaFile size={11} />
+                    <span className="file-name">{item.file_name || "–"}</span>
+                  </div>
+                </div>
               )}
             </div>
 
+            {/* Meta Info */}
             {item.file_size && (
-              <div className="logs-meta-row">
-                <span className="logs-meta-text">
-                  {prettyBytes(item.file_size)}
-                </span>
-                <span className="logs-meta-text">{item.file_type || "-"}</span>
+              <div className="timeline-meta">
+                <span className="meta-chip">{prettyBytes(item.file_size)}</span>
+                <span className="meta-chip">{item.file_type || "-"}</span>
               </div>
             )}
           </div>
@@ -312,105 +587,169 @@ export default function LogsModal({ visible, onClose }) {
     );
   };
 
+  const filterOptions = [
+    { key: "ALL", label: "All", count: counts.total },
+    {
+      key: "UPLOAD",
+      label: "Uploads",
+      count: counts.uploads,
+      color: "#4caf50",
+    },
+    {
+      key: "DELETE",
+      label: "Deletes",
+      count: counts.deletes,
+      color: "#f44336",
+    },
+    {
+      key: "RENAME",
+      label: "Renames",
+      count: counts.renames,
+      color: "#ff9800",
+    },
+    {
+      key: "CREATE_FOLDER",
+      label: "Folders",
+      count: counts.createFolders,
+      color: "#2196f3",
+    },
+    { key: "MOVE", label: "Moves", count: counts.moves, color: "#9c27b0" },
+    {
+      key: "RENAME_FOLDER",
+      label: "Folder Renames",
+      count: counts.renameFolders,
+      color: "#00bcd4",
+    },
+    {
+      key: "DELETE_FOLDER",
+      label: "Folder Deletes",
+      count: counts.deleteFolders,
+      color: "#e91e63",
+    },
+  ];
+
   if (!visible) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-box logs-modal">
-        <div className="modal-header">
-          <div>
-            <h2>
-              Activity Logs
-              {filter === "ALL"
-                ? searchQuery.trim() !== ""
-                  ? ` of "${searchQuery}"`
-                  : ""
-                : ` of ${filter} ${searchQuery}`}
-            </h2>
-            <p className="logs-subtitle">
-              Showing {displayedLogs.length} of {searchedLogs.length}
-            </p>
+    <div className="logs-overlay">
+      <div className="logs-modal-container">
+        {/* Glassmorphic Header */}
+        <div className="logs-modal-header">
+          <div className="header-title-section">
+            <div className="header-icon-wrapper">
+              <FaHistory size={18} />
+            </div>
+            <div className="header-text">
+              <h2>Activity Timeline</h2>
+              <span className="activity-count">
+                {searchedLogs.length.toLocaleString()} activities
+                {filter !== "ALL" && (
+                  <span className="filter-indicator">
+                    • {filter.replace("_", " ").toLowerCase()}
+                  </span>
+                )}
+              </span>
+            </div>
           </div>
-          <button onClick={onClose} className="close-button">
-            <FaTimes />
+          <button onClick={onClose} className="close-button-modern">
+            <FaTimes size={16} />
           </button>
         </div>
 
-        <div className="logs-modal-content">
-          <div className="logs-search-bar">
-            <FaSearch className="logs-search-icon" />
-            <input
-              type="text"
-              placeholder="Search logs..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="logs-search-input"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="logs-clear-btn"
-              >
-                <FaClear />
-              </button>
-            )}
-          </div>
-
-          <div className="logs-filter-row">
+        {/* Search & Filter Section */}
+        <div className="logs-controls">
+          <div className="search-row">
+            <div className="search-input-wrapper">
+              <FaSearch className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search activities..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input-modern"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="search-clear-btn"
+                >
+                  <FaClear size={12} />
+                </button>
+              )}
+            </div>
             <button
-              onClick={() => setFilter("ALL")}
-              className={`logs-chip ${
-                filter === "ALL" ? "logs-chip-active" : ""
-              }`}
+              className={`filter-toggle-btn ${showFilters ? "active" : ""}`}
+              onClick={() => setShowFilters(!showFilters)}
             >
-              All ({counts.total})
-            </button>
-            <button
-              onClick={() => setFilter("UPLOAD")}
-              className={`logs-chip ${
-                filter === "UPLOAD" ? "logs-chip-active" : ""
-              }`}
-            >
-              Uploads ({counts.uploads})
-            </button>
-            <button
-              onClick={() => setFilter("DELETE")}
-              className={`logs-chip ${
-                filter === "DELETE" ? "logs-chip-active" : ""
-              }`}
-            >
-              Deletes ({counts.deletes})
-            </button>
-            <button
-              onClick={() => setFilter("RENAME")}
-              className={`logs-chip ${
-                filter === "RENAME" ? "logs-chip-active" : ""
-              }`}
-            >
-              Renames ({counts.renames})
+              <FaFilter size={12} />
+              <FaChevronDown
+                size={10}
+                className={`chevron-icon ${showFilters ? "rotated" : ""}`}
+              />
             </button>
           </div>
 
-          <div className="logs-list">
-            {loading ? (
-              <div className="logs-loading">
-                <p>Loading logs...</p>
-              </div>
-            ) : displayedLogs.length === 0 ? (
-              <div className="logs-empty">
-                <p>No logs found.</p>
-              </div>
-            ) : (
-              <>
-                {displayedLogs.map((log, index) => renderLogItem(log, index))}
-                {hasMore && (
-                  <button onClick={handleLoadMore} className="logs-load-more">
-                    Load More
-                  </button>
-                )}
-              </>
-            )}
+          {/* Filter Pills */}
+          <div className={`filters-panel ${showFilters ? "expanded" : ""}`}>
+            <div className="filters-scroll">
+              {filterOptions.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setFilter(opt.key)}
+                  className={`filter-chip ${
+                    filter === opt.key ? "active" : ""
+                  }`}
+                  style={
+                    filter === opt.key && opt.color
+                      ? {
+                          backgroundColor: opt.color,
+                          borderColor: opt.color,
+                        }
+                      : {}
+                  }
+                >
+                  <span className="filter-label">{opt.label}</span>
+                  <span className="filter-count">{opt.count}</span>
+                </button>
+              ))}
+            </div>
           </div>
+        </div>
+
+        {/* Timeline Content */}
+        <div className="logs-timeline-container">
+          {loading ? (
+            <div className="skeleton-list">
+              <div className="skeleton-shimmer skeleton-date"></div>
+              {Array.from({ length: 8 }).map((_, index) => (
+                <LogsSkeleton key={`log-skel-${index}`} />
+              ))}
+            </div>
+          ) : displayedLogs.length === 0 ? (
+            <div className="empty-state-modern">
+              <div className="empty-icon-wrapper">
+                <FaHistory size={40} />
+              </div>
+              <h3>No Activity Found</h3>
+              <p>
+                {searchQuery
+                  ? `No results for "${searchQuery}"`
+                  : "There are no logs to display yet."}
+              </p>
+            </div>
+          ) : (
+            <div className="timeline-list">
+              {displayedLogs.map((log, index) => renderLogItem(log, index))}
+              {hasMore && (
+                <button onClick={handleLoadMore} className="load-more-btn">
+                  <span>Load More</span>
+                  <span className="remaining-count">
+                    {searchedLogs.length - displayCount} remaining
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

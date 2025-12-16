@@ -27,7 +27,7 @@ export const ToastProvider = ({ children }) => {
   const show = useCallback(
     (title, message, options = {}) => {
       const id = Date.now().toString();
-      const duration = options.duration || 5000;
+      const duration = options.duration || 3000;
       const type = options.type || "success";
 
       setToasts((prev) => [...prev, { id, title, message, type, duration }]);

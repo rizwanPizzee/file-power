@@ -20,6 +20,7 @@ export default function Header({
   onSignOut,
   onUploadStart,
   onUploaded,
+  currentFolderId = null,
 }) {
   const [profileVisible, setProfileVisible] = useState(false);
   const [logsVisible, setLogsVisible] = useState(false);
@@ -179,7 +180,11 @@ export default function Header({
           Logs
         </div>
 
-        <FileUploader onUploadStart={onUploadStart} onUploaded={onUploaded} />
+        <FileUploader
+          onUploadStart={onUploadStart}
+          onUploaded={onUploaded}
+          currentFolderId={currentFolderId}
+        />
         <div
           className="avatar-circle"
           onClick={() => setProfileVisible(true)}

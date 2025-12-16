@@ -2,38 +2,75 @@ import React, {
   useEffect,
   useState,
   useMemo,
+  useCallback,
   forwardRef,
   useImperativeHandle,
 } from "react";
 import { supabase } from "../lib/supabase";
+import {
+  createFolder,
+  listFolders,
+  moveFile,
+  renameFolder,
+  deleteFolder,
+  getFolderName,
+} from "../lib/storage";
 import FileList from "./FileList";
 import FileViewer from "./FileViewer";
 import CustomAlert from "./CustomAlert";
 import RenameModal from "./RenameModal";
 import PropertiesModal from "./PropertiesModal";
+import MoveToFolderModal from "./MoveToFolderModal";
+import FolderPropertiesModal from "./FolderPropertiesModal";
+import DeleteFolderModal from "./DeleteFolderModal";
+import FolderRenameModal from "./FolderRenameModal";
 import {
   FaSearch,
   FaSortAmountDown,
   FaSortAmountUp,
   FaSync,
-  FaClone,
+  FaFolderPlus,
   FaEyeSlash,
+  FaArrowLeft,
+  FaHome,
+  FaTimes,
+  FaSpinner,
 } from "react-icons/fa";
 import { STORAGE_BUCKET } from "../lib/constants";
 import "../App.css";
 
 const FilesScreen = forwardRef((props, ref) => {
   const [files, setFiles] = useState([]);
+  const [folders, setFolders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOrder, setSortOrder] = useState("desc"); // desc or asc
+  const [sortOrder, setSortOrder] = useState("desc");
   const [activeDuplicateFileId, setActiveDuplicateFileId] = useState(null);
 
+  // Folder navigation state
+  const [currentFolderId, setCurrentFolderId] = useState(null);
+  const [currentFolderName, setCurrentFolderName] = useState(null);
+  const [folderPath, setFolderPath] = useState([]);
+
+  // Create folder modal
+  const [newFolderModalVisible, setNewFolderModalVisible] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [folderNameWarning, setFolderNameWarning] = useState("");
+  const [creatingFolder, setCreatingFolder] = useState(false);
+
+  // Search scope
+  const [searchScope, setSearchScope] = useState("Current");
+  const [allSearchResults, setAllSearchResults] = useState([]);
+  const [isSearchingAll, setIsSearchingAll] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  // Viewer state
   const [viewerVisible, setViewerVisible] = useState(false);
   const [viewerFile, setViewerFile] = useState(null);
   const [viewerUrl, setViewerUrl] = useState(null);
 
+  // Alert state
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertConfig, setAlertConfig] = useState({
     title: "",
@@ -41,20 +78,39 @@ const FilesScreen = forwardRef((props, ref) => {
     buttons: [],
   });
 
+  // Rename state
   const [renameVisible, setRenameVisible] = useState(false);
   const [fileToRename, setFileToRename] = useState(null);
 
+  // Folder rename state
+  const [folderRenameVisible, setFolderRenameVisible] = useState(false);
+  const [folderToRename, setFolderToRename] = useState(null);
+
+  // Folder delete state
+  const [deleteFolderModalVisible, setDeleteFolderModalVisible] =
+    useState(false);
+  const [folderToDelete, setFolderToDelete] = useState(null);
+
+  // Properties state
   const [propsVisible, setPropsVisible] = useState(false);
   const [propsFile, setPropsFile] = useState(null);
   const [propsUploader, setPropsUploader] = useState(null);
   const [propsLoading, setPropsLoading] = useState(false);
 
+  // Folder properties state
+  const [folderPropsVisible, setFolderPropsVisible] = useState(false);
+  const [folderPropsData, setFolderPropsData] = useState(null);
+
+  // Move modal state
+  const [moveModalVisible, setMoveModalVisible] = useState(false);
+  const [fileToMove, setFileToMove] = useState(null);
+  const [movingFile, setMovingFile] = useState(false);
+
   const [currentUserEmail, setCurrentUserEmail] = useState(null);
 
-  useEffect(() => {
-    fetchFiles();
-    fetchUser();
-  }, []);
+  // Download state
+  const [downloadingFileId, setDownloadingFileId] = useState(null);
+  const [downloadProgress, setDownloadProgress] = useState(0);
 
   const fetchUser = async () => {
     const { data } = await supabase.auth.getUser();
@@ -63,48 +119,76 @@ const FilesScreen = forwardRef((props, ref) => {
     }
   };
 
-  const fetchFiles = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("files")
-        .select("*")
-        .order("uploaded_at", { ascending: false })
-        .limit(1000);
-
-      if (error) throw error;
-      setFiles(data || []);
-    } catch (error) {
-      console.error("Error fetching files:", error.message);
-      let msg = error.message;
-      if (msg.includes("relation") && msg.includes("does not exist")) {
-        msg = "Table 'files' does not exist in Supabase.";
+  const fetchFiles = useCallback(
+    async (isRefresh = false) => {
+      if (!isRefresh) {
+        setFiles([]);
+        setFolders([]);
+        setLoading(true);
       }
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+
+      try {
+        const [filesResult, foldersResult] = await Promise.all([
+          (async () => {
+            let query = supabase
+              .from("files")
+              .select("*")
+              .order("uploaded_at", { ascending: false })
+              .limit(1000);
+
+            if (currentFolderId === null) {
+              query = query.is("folder_id", null);
+            } else {
+              query = query.eq("folder_id", currentFolderId);
+            }
+            return query;
+          })(),
+          listFolders({ parentFolderId: currentFolderId }),
+        ]);
+
+        const { data: dbRows, error: dbErr } = filesResult;
+
+        if (dbErr) {
+          console.warn("fetchFiles db error:", dbErr);
+        } else {
+          setFiles((dbRows || []).map((r) => ({ ...r, source: "db" })));
+        }
+
+        setFolders(foldersResult);
+      } catch (e) {
+        console.warn("fetchFiles failed", e);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [currentFolderId]
+  );
+
+  useEffect(() => {
+    fetchFiles();
+    fetchUser();
+    setSearchScope("Current");
+    setSearchQuery("");
+  }, [fetchFiles]);
 
   useImperativeHandle(ref, () => ({
-    handleUploaded: (fileRow, publicUrl, tempId, error) => {
-      if (error) {
-        // Error handled in uploader, but we can refresh if needed or log
-      } else {
+    handleUploaded: (fileRow, publicUrl, tempId, error, uploadFolderName) => {
+      if (!error) {
         fetchFiles();
-        // Log upload
         (async () => {
           try {
             const { data: userData } = await supabase.auth.getUser();
             const user = userData?.user;
-
+            // Use the folder name passed from upload, or current folder name, or resolve from folder_id
+            let folderName = uploadFolderName || currentFolderName || "Root";
             await supabase.from("user_file_logs").insert([
               {
                 user_id: user?.id,
                 user_email: user?.email,
                 action: "UPLOAD",
                 file_name: fileRow.name,
-                file_path: fileRow.path || fileRow.name,
+                file_path: folderName,
               },
             ]);
           } catch (logErr) {
@@ -113,17 +197,343 @@ const FilesScreen = forwardRef((props, ref) => {
         })();
       }
     },
+    currentFolderId,
+    currentFolderName,
   }));
 
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchFiles();
+    fetchFiles(true);
   };
 
-  // Download state
-  const [downloadingFileId, setDownloadingFileId] = useState(null);
-  const [downloadProgress, setDownloadProgress] = useState(0);
+  // Navigation functions
+  const navigateToFolder = (folderId, folderName) => {
+    setFiles([]);
+    setFolders([]);
+    setLoading(true);
+    setSearchQuery("");
+    setSearchScope("Current");
 
+    if (folderId === null) {
+      setCurrentFolderId(null);
+      setCurrentFolderName(null);
+      setFolderPath([]);
+    } else {
+      setFolderPath((prev) => [
+        ...prev,
+        { id: currentFolderId, name: currentFolderName },
+      ]);
+      setCurrentFolderId(folderId);
+      setCurrentFolderName(folderName);
+    }
+  };
+
+  const navigateBack = () => {
+    if (folderPath.length === 0) return;
+
+    setFiles([]);
+    setFolders([]);
+    setLoading(true);
+    setSearchQuery("");
+
+    const newPath = [...folderPath];
+    const parent = newPath.pop();
+    setFolderPath(newPath);
+    setCurrentFolderId(parent?.id || null);
+    setCurrentFolderName(parent?.name || null);
+  };
+
+  const navigateToRoot = () => {
+    setFiles([]);
+    setFolders([]);
+    setLoading(true);
+    setSearchQuery("");
+    setCurrentFolderId(null);
+    setCurrentFolderName(null);
+    setFolderPath([]);
+  };
+
+  const navigateToBreadcrumb = (index) => {
+    if (index < 0) {
+      navigateToRoot();
+      return;
+    }
+
+    setFiles([]);
+    setFolders([]);
+    setLoading(true);
+    setSearchQuery("");
+
+    const newPath = folderPath.slice(0, index + 1);
+    const target = newPath.pop();
+    setFolderPath(newPath);
+    setCurrentFolderId(target?.id || null);
+    setCurrentFolderName(target?.name || null);
+  };
+
+  // Create folder handlers
+  const handleFolderNameChange = (text) => {
+    setNewFolderName(text);
+    if (!text.trim()) {
+      setFolderNameWarning("");
+      return;
+    }
+
+    const duplicate = folders.some(
+      (f) => f.name.toLowerCase() === text.trim().toLowerCase()
+    );
+
+    if (duplicate) {
+      setFolderNameWarning("A folder with this name already exists.");
+    } else {
+      setFolderNameWarning("");
+    }
+  };
+
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return;
+    if (folderNameWarning) return;
+
+    setCreatingFolder(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+
+      if (!user) {
+        setAlertConfig({
+          title: "Error",
+          message: "You must be signed in to create folders",
+          buttons: [{ text: "OK" }],
+        });
+        setAlertVisible(true);
+        return;
+      }
+
+      await createFolder({
+        name: newFolderName.trim(),
+        parentFolderId: currentFolderId,
+        user: { id: user.id, email: user.email },
+      });
+
+      setNewFolderModalVisible(false);
+      setNewFolderName("");
+      setFolderNameWarning("");
+      fetchFiles();
+    } catch (err) {
+      console.error("Create folder failed:", err);
+      setAlertConfig({
+        title: "Error",
+        message: err.message || "Failed to create folder",
+        buttons: [{ text: "OK" }],
+      });
+      setAlertVisible(true);
+    } finally {
+      setCreatingFolder(false);
+    }
+  };
+
+  // Search scope handlers
+  const performGlobalSearch = async (text) => {
+    if (!text.trim()) {
+      setAllSearchResults([]);
+      return;
+    }
+
+    setIsSearchingAll(true);
+    try {
+      const matchPattern = `%${text}%`;
+
+      const { data: fileData, error: fileErr } = await supabase
+        .from("files")
+        .select(`*, folders:folder_id ( name )`)
+        .or(
+          `name.ilike.${matchPattern},uploaded_by_email.ilike.${matchPattern}`
+        );
+
+      if (fileErr) throw fileErr;
+
+      const { data: folderData, error: folderErr } = await supabase
+        .from("folders")
+        .select("*")
+        .or(
+          `name.ilike.${matchPattern},created_by_email.ilike.${matchPattern}`
+        );
+
+      if (folderErr) throw folderErr;
+
+      const mappedFiles = (fileData || []).map((f) => ({
+        ...f,
+        source: "db",
+        folderName: f.folders?.name || null,
+        _isFolder: false,
+      }));
+
+      const mappedFolders = (folderData || []).map((f) => ({
+        ...f,
+        _isFolder: true,
+        source: "db",
+      }));
+
+      setAllSearchResults([...mappedFolders, ...mappedFiles]);
+    } catch (err) {
+      console.error("Global search error:", err);
+      setAllSearchResults([]);
+    } finally {
+      setIsSearchingAll(false);
+    }
+  };
+
+  const toggleSearchScope = (scope) => {
+    if (scope === searchScope) return;
+    setSearchScope(scope);
+    if (scope === "All" && searchQuery.trim()) {
+      performGlobalSearch(searchQuery);
+    }
+  };
+
+  useEffect(() => {
+    if (searchScope === "All" && currentFolderId === null) {
+      const timer = setTimeout(() => {
+        if (searchQuery.trim()) {
+          performGlobalSearch(searchQuery);
+        } else {
+          setAllSearchResults([]);
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [searchQuery, searchScope, currentFolderId]);
+
+  // Move file handlers
+  const handleMoveFile = (file) => {
+    setFileToMove(file);
+    setMoveModalVisible(true);
+  };
+
+  const performMove = async (destinationFolderId) => {
+    if (!fileToMove) return;
+
+    setMovingFile(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+
+      if (!user) {
+        setAlertConfig({
+          title: "Error",
+          message: "You must be signed in to move files",
+          buttons: [{ text: "OK" }],
+        });
+        setAlertVisible(true);
+        return;
+      }
+
+      await moveFile({
+        file: fileToMove,
+        destinationFolderId,
+        user: { id: user.id, email: user.email },
+      });
+
+      setMoveModalVisible(false);
+      setFileToMove(null);
+      fetchFiles();
+    } catch (err) {
+      console.error("Move failed:", err);
+      setAlertConfig({
+        title: "Move Failed",
+        message: err.message || "Could not move file",
+        buttons: [{ text: "OK" }],
+      });
+      setAlertVisible(true);
+    } finally {
+      setMovingFile(false);
+    }
+  };
+
+  // Folder action handlers
+  const handleFolderRename = (folder) => {
+    setFolderToRename(folder);
+    setFolderRenameVisible(true);
+  };
+
+  const performFolderRename = async (newName) => {
+    if (!folderToRename || !newName) return;
+
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+
+      if (!user) {
+        setAlertConfig({
+          title: "Error",
+          message: "You must be signed in to rename folders",
+          buttons: [{ text: "OK" }],
+        });
+        setAlertVisible(true);
+        return;
+      }
+
+      await renameFolder({
+        folder: folderToRename,
+        newName,
+        user: { id: user.id, email: user.email },
+      });
+
+      setFolderRenameVisible(false);
+      setFolderToRename(null);
+      fetchFiles();
+    } catch (err) {
+      console.error("Folder rename failed:", err);
+      // Re-throw to let the modal handle the error display
+      throw err;
+    }
+  };
+
+  const handleFolderDelete = (folder) => {
+    setFolderToDelete(folder);
+    setDeleteFolderModalVisible(true);
+  };
+
+  const executeFolderDelete = async () => {
+    if (!folderToDelete) return;
+
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData?.user;
+
+      if (!user) {
+        throw new Error("You must be signed in to delete folders");
+      }
+
+      await deleteFolder({
+        folder: folderToDelete,
+        user: { id: user.id, email: user.email },
+      });
+
+      setDeleteFolderModalVisible(false);
+      setFolderToDelete(null);
+      fetchFiles();
+
+      // Show success modal/alert
+      setAlertConfig({
+        title: "Success",
+        message: "Folder deleted successfully.",
+        buttons: [{ text: "OK", style: "default" }],
+      });
+      setAlertVisible(true);
+    } catch (err) {
+      console.error("Folder delete failed:", err);
+      // Re-throw to let the modal handle the error display
+      throw err;
+    }
+  };
+
+  const handleFolderProperties = (folder) => {
+    setFolderPropsData(folder);
+    setFolderPropsVisible(true);
+  };
+
+  // File action handlers
   const formatBytes = (bytes) => {
     if (!bytes || bytes === 0) return "0 B";
     const k = 1024;
@@ -133,7 +543,7 @@ const FilesScreen = forwardRef((props, ref) => {
   };
 
   const handleDownload = async (file) => {
-    if (downloadingFileId) return; // Prevent multiple downloads
+    if (downloadingFileId) return;
 
     setAlertConfig({
       title: "Download Confirmation",
@@ -157,7 +567,6 @@ const FilesScreen = forwardRef((props, ref) => {
                 .getPublicUrl(file.path || file.name);
 
               if (data?.publicUrl) {
-                // Use XMLHttpRequest to track progress
                 const xhr = new XMLHttpRequest();
                 xhr.open("GET", data.publicUrl, true);
                 xhr.responseType = "blob";
@@ -181,27 +590,12 @@ const FilesScreen = forwardRef((props, ref) => {
                     link.click();
                     document.body.removeChild(link);
                     window.URL.revokeObjectURL(blobUrl);
-                  } else {
-                    console.error("Download failed with status:", xhr.status);
-                    setAlertConfig({
-                      title: "Download Failed",
-                      message: "Could not download the file. Please try again.",
-                      buttons: [{ text: "OK" }],
-                    });
-                    setAlertVisible(true);
                   }
                   setDownloadingFileId(null);
                   setDownloadProgress(0);
                 };
 
                 xhr.onerror = () => {
-                  console.error("Download network error");
-                  setAlertConfig({
-                    title: "Download Error",
-                    message: "Network error occurred during download.",
-                    buttons: [{ text: "OK" }],
-                  });
-                  setAlertVisible(true);
                   setDownloadingFileId(null);
                   setDownloadProgress(0);
                 };
@@ -212,12 +606,6 @@ const FilesScreen = forwardRef((props, ref) => {
               }
             } catch (error) {
               console.error("Error downloading file:", error.message);
-              setAlertConfig({
-                title: "Download Failed",
-                message: "Could not download the file. Please try again.",
-                buttons: [{ text: "OK" }],
-              });
-              setAlertVisible(true);
               setDownloadingFileId(null);
               setDownloadProgress(0);
             }
@@ -237,13 +625,12 @@ const FilesScreen = forwardRef((props, ref) => {
         {
           text: "Delete",
           style: "destructive",
-          closeOnPress: false, // Don't close - we'll show loading state
+          closeOnPress: false,
           onPress: async () => {
-            // Show deleting... alert
             setAlertConfig({
               title: "Deleting...",
               message: `Deleting "${file.name}". Please wait...`,
-              buttons: [], // No buttons during deletion
+              buttons: [],
               showSpinner: true,
             });
 
@@ -266,13 +653,21 @@ const FilesScreen = forwardRef((props, ref) => {
                 const { data: userData } = await supabase.auth.getUser();
                 const user = userData?.user;
 
+                // Get the folder name for logging - use file.folder_id if available, otherwise current folder
+                let logFolderName = "Root";
+                if (file.folder_id) {
+                  logFolderName = await getFolderName(file.folder_id);
+                } else if (currentFolderName) {
+                  logFolderName = currentFolderName;
+                }
+
                 await supabase.from("user_file_logs").insert([
                   {
                     user_id: user?.id,
                     user_email: user?.email,
                     action: "DELETE",
                     file_name: file.name,
-                    file_path: file.path || file.name,
+                    file_path: logFolderName,
                   },
                 ]);
               } catch (logErr) {
@@ -379,9 +774,6 @@ const FilesScreen = forwardRef((props, ref) => {
           .limit(1),
       ]);
 
-      if (deletedRes.error) throw deletedRes.error;
-      if (activeRes.error) throw activeRes.error;
-
       const deleted = deletedRes.data?.[0] ?? null;
       const active = activeRes.data?.[0] ?? null;
       const u = deleted || active || null;
@@ -429,58 +821,13 @@ const FilesScreen = forwardRef((props, ref) => {
         return;
       }
 
-      let uploaderName = "Unknown User";
-      try {
-        const [activeRes, deletedRes] = await Promise.all([
-          supabase
-            .from("safe_auth_users")
-            .select("*")
-            .eq("email", file.uploaded_by_email)
-            .limit(1),
-          supabase
-            .from("deleted_auth_users")
-            .select("*")
-            .eq("email", file.uploaded_by_email)
-            .limit(1),
-        ]);
-
-        const deleted = deletedRes.data?.[0] ?? null;
-        const active = activeRes.data?.[0] ?? null;
-        const uploader = deleted || active || null;
-
-        if (uploader) {
-          const meta = uploader.user_metadata || {};
-          uploaderName =
-            meta.full_name ||
-            uploader.full_name ||
-            uploader.email ||
-            "Unknown User";
-        }
-      } catch (e) {
-        console.warn("Failed to fetch uploader info for share:", e);
-      }
-
-      const fileExt = file.name?.includes(".")
-        ? file.name.split(".").pop().toUpperCase()
-        : "FILE";
-
-      const formatBytes = (bytes) => {
-        if (!bytes || bytes === 0) return "0 B";
-        const k = 1024;
-        const sizes = ["B", "KB", "MB", "GB", "TB"];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-      };
-
-      const shareMessage = `File Name: ${
-        file.name
-      }\n\nShared By: ${uploaderName}\n\nFile Details:\n  • Type: ${fileExt}\n  • Size: ${formatBytes(
+      const shareMessage = `File: ${file.name}\nSize: ${formatBytes(
         file.size
-      )}\n\nFile Link: ${publicUrl}`;
+      )}\nLink: ${publicUrl}`;
 
       if (navigator.share) {
         await navigator.share({
-          title: `${file.name} - Shared by ${uploaderName}`,
+          title: file.name,
           text: shareMessage,
           url: publicUrl,
         });
@@ -494,14 +841,8 @@ const FilesScreen = forwardRef((props, ref) => {
         setAlertVisible(true);
       }
     } catch (error) {
-      console.error("Share error:", error);
       if (error.name !== "AbortError") {
-        setAlertConfig({
-          title: "Share Error",
-          message: error.message || "Failed to share file",
-          buttons: [{ text: "OK" }],
-        });
-        setAlertVisible(true);
+        console.error("Share error:", error);
       }
     }
   };
@@ -510,26 +851,71 @@ const FilesScreen = forwardRef((props, ref) => {
     setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
   };
 
-  const filteredList = useMemo(() => {
-    let list = [...files];
-
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter(
-        (f) =>
-          f.name.toLowerCase().includes(q) ||
-          (f.uploaded_by_email && f.uploaded_by_email.toLowerCase().includes(q))
-      );
+  // Combined list with folders and files
+  const combinedList = useMemo(() => {
+    if (searchScope === "All" && currentFolderId === null && searchQuery) {
+      return allSearchResults;
     }
 
+    const folderItems = folders.map((f) => ({
+      ...f,
+      _isFolder: true,
+      name: f.name,
+      uploaded_at: f.created_at,
+    }));
+
+    return [...folderItems, ...files];
+  }, [
+    folders,
+    files,
+    searchScope,
+    allSearchResults,
+    searchQuery,
+    currentFolderId,
+  ]);
+
+  const filteredList = useMemo(() => {
+    if (searchScope === "All" && currentFolderId === null && searchQuery) {
+      let list = [...combinedList];
+      list.sort((a, b) => {
+        if (a._isFolder && !b._isFolder) return -1;
+        if (!a._isFolder && b._isFolder) return 1;
+
+        const dateA = new Date(a.uploaded_at || a.created_at || 0);
+        const dateB = new Date(b.uploaded_at || b.created_at || 0);
+        return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+      });
+      return list;
+    }
+
+    const normalizedQuery = (searchQuery || "").trim().toLowerCase();
+
+    let list = normalizedQuery
+      ? combinedList.filter((item) => {
+          const name = (item.name || "").toLowerCase();
+          const email = (
+            item.uploaded_by_email ||
+            item.created_by_email ||
+            ""
+          ).toLowerCase();
+
+          return (
+            name.includes(normalizedQuery) || email.includes(normalizedQuery)
+          );
+        })
+      : combinedList;
+
     list.sort((a, b) => {
-      const dateA = new Date(a.uploaded_at);
-      const dateB = new Date(b.uploaded_at);
+      if (a._isFolder && !b._isFolder) return -1;
+      if (!a._isFolder && b._isFolder) return 1;
+
+      const dateA = new Date(a.uploaded_at || a.created_at || 0);
+      const dateB = new Date(b.uploaded_at || b.created_at || 0);
       return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
     });
 
     return list;
-  }, [files, searchQuery, sortOrder]);
+  }, [combinedList, searchQuery, sortOrder, searchScope, currentFolderId]);
 
   const duplicatesMap = useMemo(() => {
     const getBaseName = (filename) => {
@@ -539,6 +925,7 @@ const FilesScreen = forwardRef((props, ref) => {
     const groups = {};
 
     filteredList.forEach((file) => {
+      if (file._isFolder) return;
       const baseName = getBaseName(file.name);
       if (!groups[baseName]) {
         groups[baseName] = [];
@@ -555,7 +942,7 @@ const FilesScreen = forwardRef((props, ref) => {
 
         sortedGroup.forEach((file, index) => {
           duplicates[file.id] = {
-            index: index + 1, // 1-based index
+            index: index + 1,
             total: sortedGroup.length,
             others: sortedGroup.filter((f) => f.id !== file.id),
           };
@@ -570,19 +957,33 @@ const FilesScreen = forwardRef((props, ref) => {
     <div className="files-screen">
       <div className="files-header">
         <div className="search-bar">
-          <FaSearch className="search-icon" />
+          <FaSearch className="search-icon-search" />
           <input
             type="text"
             placeholder="Search files..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
             className="search-input"
           />
+          {searchQuery && (
+            <button className="search-clear" onClick={() => setSearchQuery("")}>
+              <FaTimes />
+            </button>
+          )}
         </div>
 
         <div className="actions-bar">
           <button
-            className="icon-button"
+            className="icon-button new-folder-button"
+            onClick={() => setNewFolderModalVisible(true)}
+            title="New Folder"
+          >
+            <FaFolderPlus size={30} color="#fad920ff" />
+          </button>
+          <button
+            className="icon-button sort-button"
             onClick={toggleSort}
             title={`Sort by Date (${sortOrder})`}
           >
@@ -590,7 +991,7 @@ const FilesScreen = forwardRef((props, ref) => {
           </button>
           <button
             className="icon-button"
-            onClick={fetchFiles}
+            onClick={handleRefresh}
             title="Refresh"
             disabled={loading}
           >
@@ -598,20 +999,69 @@ const FilesScreen = forwardRef((props, ref) => {
           </button>
         </div>
       </div>
+
+      {/* Search Scope Toggle - only at root */}
+      {currentFolderId === null &&
+        (searchQuery.length > 0 ||
+          isSearchFocused ||
+          searchScope === "All") && (
+          <div className="scope-container">
+            <button
+              className={`scope-btn ${
+                searchScope === "Current" ? "active" : ""
+              }`}
+              onClick={() => toggleSearchScope("Current")}
+            >
+              Current
+            </button>
+            <button
+              className={`scope-btn ${searchScope === "All" ? "active" : ""}`}
+              onClick={() => toggleSearchScope("All")}
+            >
+              All
+            </button>
+          </div>
+        )}
+
+      {/* Breadcrumb Navigation */}
+      {currentFolderId !== null && (
+        <div className="breadcrumb-container">
+          <button className="breadcrumb-back" onClick={navigateBack}>
+            <FaArrowLeft />
+          </button>
+          <div className="breadcrumb-path">
+            <button className="breadcrumb-item" onClick={navigateToRoot}>
+              <FaHome />
+              <span>Root</span>
+            </button>
+            {folderPath.map((item, index) => (
+              <React.Fragment key={item.id || index}>
+                <span className="breadcrumb-separator">/</span>
+                <button
+                  className="breadcrumb-item"
+                  onClick={() => navigateToBreadcrumb(index)}
+                >
+                  {item.name || "..."}
+                </button>
+              </React.Fragment>
+            ))}
+            <span className="breadcrumb-separator">/</span>
+            <span className="breadcrumb-current">{currentFolderName}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Stats */}
+      <div className="stats-container">
+        <span className="stats-text">
+          {folders.length} Folder{folders.length !== 1 ? "s" : ""},{" "}
+          {files.length} File{files.length !== 1 ? "s" : ""}
+        </span>
+      </div>
+
+      {/* Clear Duplicate Detection */}
       {activeDuplicateFileId && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            marginBottom: "15px",
-            position: "fixed",
-            top: "106px",
-            left: "50%",
-            translate: "-50%",
-            zIndex: 1000,
-          }}
-        >
+        <div className="duplicate-clear-container">
           <button
             className="icon-button1 active"
             onClick={() => setActiveDuplicateFileId(null)}
@@ -624,9 +1074,10 @@ const FilesScreen = forwardRef((props, ref) => {
           </button>
         </div>
       )}
+
       <FileList
         data={filteredList}
-        refreshing={loading || refreshing}
+        refreshing={loading || refreshing || isSearchingAll}
         onRefresh={handleRefresh}
         onDelete={handleDelete}
         onDownload={handleDownload}
@@ -634,14 +1085,21 @@ const FilesScreen = forwardRef((props, ref) => {
         onRename={handleRename}
         onProperties={handleProperties}
         onShare={handleShare}
+        onMove={handleMoveFile}
+        onFolderOpen={navigateToFolder}
+        onFolderRename={handleFolderRename}
+        onFolderDelete={handleFolderDelete}
+        onFolderProperties={handleFolderProperties}
         downloadingFileId={downloadingFileId}
         downloadProgress={downloadProgress}
         currentUserEmail={currentUserEmail}
+        currentFolderId={currentFolderId}
         duplicatesMap={duplicatesMap}
         activeDuplicateFileId={activeDuplicateFileId}
         onDuplicateTagClick={setActiveDuplicateFileId}
       />
 
+      {/* File Viewer */}
       <FileViewer
         visible={viewerVisible}
         file={viewerFile}
@@ -649,6 +1107,7 @@ const FilesScreen = forwardRef((props, ref) => {
         onClose={() => setViewerVisible(false)}
       />
 
+      {/* Alert Modal */}
       <CustomAlert
         visible={alertVisible}
         title={alertConfig.title}
@@ -658,6 +1117,7 @@ const FilesScreen = forwardRef((props, ref) => {
         showSpinner={alertConfig.showSpinner}
       />
 
+      {/* File Rename Modal */}
       <RenameModal
         visible={renameVisible}
         file={fileToRename}
@@ -668,6 +1128,30 @@ const FilesScreen = forwardRef((props, ref) => {
         onSave={handleRenameSubmit}
       />
 
+      {/* Folder Rename Modal */}
+      <FolderRenameModal
+        visible={folderRenameVisible}
+        folder={folderToRename}
+        existingNames={folders.map((f) => f.name)}
+        onClose={() => {
+          setFolderRenameVisible(false);
+          setFolderToRename(null);
+        }}
+        onRename={performFolderRename}
+      />
+
+      {/* Delete Folder Modal */}
+      <DeleteFolderModal
+        visible={deleteFolderModalVisible}
+        folder={folderToDelete}
+        onClose={() => {
+          setDeleteFolderModalVisible(false);
+          setFolderToDelete(null);
+        }}
+        onDelete={executeFolderDelete}
+      />
+
+      {/* File Properties Modal */}
       <PropertiesModal
         visible={propsVisible}
         file={propsFile}
@@ -679,6 +1163,87 @@ const FilesScreen = forwardRef((props, ref) => {
           setPropsUploader(null);
         }}
       />
+
+      {/* Folder Properties Modal */}
+      <FolderPropertiesModal
+        visible={folderPropsVisible}
+        folder={folderPropsData}
+        onClose={() => {
+          setFolderPropsVisible(false);
+          setFolderPropsData(null);
+        }}
+      />
+
+      {/* Move to Folder Modal */}
+      <MoveToFolderModal
+        visible={moveModalVisible}
+        file={fileToMove}
+        currentFolderId={currentFolderId}
+        onClose={() => {
+          setMoveModalVisible(false);
+          setFileToMove(null);
+        }}
+        onMove={performMove}
+        moving={movingFile}
+      />
+
+      {/* Create Folder Modal */}
+      {newFolderModalVisible && (
+        <div
+          className="modal-overlay"
+          onClick={() => setNewFolderModalVisible(false)}
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>New Folder</h3>
+              <button
+                className="close-btn"
+                onClick={() => {
+                  setNewFolderModalVisible(false);
+                  setNewFolderName("");
+                  setFolderNameWarning("");
+                }}
+              >
+                <FaTimes />
+              </button>
+            </div>
+            <div className="modal-body">
+              <input
+                type="text"
+                className="modal-input"
+                placeholder="Folder name"
+                value={newFolderName}
+                onChange={(e) => handleFolderNameChange(e.target.value)}
+                autoFocus
+              />
+              {folderNameWarning && (
+                <div className="warning-text">{folderNameWarning}</div>
+              )}
+            </div>
+            <div className="modal-actions">
+              <button
+                className="modal-btn cancel"
+                onClick={() => {
+                  setNewFolderModalVisible(false);
+                  setNewFolderName("");
+                  setFolderNameWarning("");
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="modal-btn primary"
+                onClick={handleCreateFolder}
+                disabled={
+                  creatingFolder || !newFolderName.trim() || !!folderNameWarning
+                }
+              >
+                {creatingFolder ? <FaSpinner className="spinner" /> : "Create"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

@@ -9,7 +9,11 @@ import { STORAGE_BUCKET } from "../lib/constants";
 const MAX_FILE_SIZE_MB = 50;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
-const FileUploader = ({ onUploaded, onUploadStart }) => {
+const FileUploader = ({
+  onUploaded,
+  onUploadStart,
+  currentFolderId = null,
+}) => {
   const [uploading, setUploading] = useState(false);
   const [checkingFile, setCheckingFile] = useState(false);
   const [alert, setAlert] = useState(null);
@@ -76,13 +80,19 @@ const FileUploader = ({ onUploaded, onUploadStart }) => {
         return;
       }
 
-      // Check if file exists
-      const filePath = `${user.id}/${file.name}`;
-      const { data: existingFile } = await supabase
+      // Check if file exists in current folder by name AND folder_id
+      let existsQuery = supabase
         .from("files")
         .select("id")
-        .eq("path", filePath)
-        .single();
+        .eq("name", file.name);
+
+      if (currentFolderId === null) {
+        existsQuery = existsQuery.is("folder_id", null);
+      } else {
+        existsQuery = existsQuery.eq("folder_id", currentFolderId);
+      }
+
+      const { data: existingFile } = await existsQuery.single();
 
       if (existingFile) {
         setCheckingFile(false);
@@ -165,7 +175,9 @@ const FileUploader = ({ onUploaded, onUploadStart }) => {
       abortControllerRef.current = new AbortController();
 
       let filename = fileMeta.name;
-      let filePath = `${user.id}/${filename}`;
+      // Include folder in path to allow same filename in different folders
+      const folderPrefix = currentFolderId ? `f_${currentFolderId}` : "root";
+      let filePath = `${user.id}/${folderPrefix}/${filename}`;
 
       // Handle renaming for "Keep Both"
       if (mode === "keep_both") {
@@ -174,7 +186,7 @@ const FileUploader = ({ onUploaded, onUploadStart }) => {
         const baseName = nameParts.join(".");
         const timestamp = Math.floor(Date.now() / 1000);
         filename = `${baseName} (${timestamp})${ext ? "." + ext : ""}`;
-        filePath = `${user.id}/${filename}`;
+        filePath = `${user.id}/${folderPrefix}/${filename}`;
       }
 
       // Upload to Supabase
@@ -206,6 +218,7 @@ const FileUploader = ({ onUploaded, onUploadStart }) => {
             mime_type: fileMeta.mimeType,
             uploaded_by: user.id,
             uploaded_by_email: user.email,
+            folder_id: currentFolderId,
           },
         ])
         .select()

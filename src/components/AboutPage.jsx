@@ -110,7 +110,7 @@ export default function AboutPage({ onBack }) {
                 dept="P & I"
                 bps="15"
                 phone="03445707580"
-                email="khanabdurrehman945@gmail.com"
+                email=""
                 color="#2072e6"
               />
               <DeveloperCard
@@ -199,7 +199,7 @@ export default function AboutPage({ onBack }) {
                 dept="P & I"
                 bps="18"
                 phone="03009790412"
-                email="naveedayaz@gmail.com"
+                email=""
                 color="#00b894"
               />
               <DeveloperCard
@@ -216,7 +216,7 @@ export default function AboutPage({ onBack }) {
       </div>
 
       <footer className="about-footer">
-        <p>© 2025 File Power & P&I Tools. All rights reserved.</p>
+        <p>{new Date().getFullYear()} Grid Power. All rights reserved.</p>
       </footer>
 
       {showTerms && <TermsModal onClose={() => setShowTerms(false)} />}
@@ -245,7 +245,7 @@ function DeveloperCard({
   bps,
   phone,
   email,
-  github,
+  // github,
   color,
 }) {
   return (
@@ -292,12 +292,12 @@ function DeveloperCard({
             <span>{email}</span>
           </div>
         )}
-        {github && (
+        {/* {github && (
           <div className="dev-info-item">
             <FaGithub />
             <span>{github}</span>
           </div>
-        )}
+        )} */}
         <div className="dev-contact-row">
           {phone && (
             <a href={`tel:${phone}`} className="contact-btn" title="Call">
@@ -309,7 +309,7 @@ function DeveloperCard({
               <FaEnvelope />
             </a>
           )}
-          {github && (
+          {/* {github && (
             <a
               href={`https://github.com/${github}`}
               target="_blank"
@@ -319,7 +319,7 @@ function DeveloperCard({
             >
               <FaGithub />
             </a>
-          )}
+          )} */}
         </div>
       </div>
     </div>
