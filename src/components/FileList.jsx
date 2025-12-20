@@ -358,13 +358,13 @@ export default function FileList({
                 <FaInfoCircle className="menu-icon" />
                 <span>Properties</span>
               </div>
-              <div
+              {/* <div
                 className="menu-item"
                 onClick={() => handleMenuAction(onShare, file)}
               >
                 <FaShareAlt className="menu-icon" />
                 <span>Share</span>
-              </div>
+              </div> */}
               <div className="menu-divider" />
               {currentUserEmail &&
                 [
