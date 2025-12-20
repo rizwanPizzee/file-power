@@ -2717,3 +2717,34 @@ body {
     display: none;
   }
 }
+
+/* Custom Tooltip Styling */
+.tooltip-inner {
+  background-color: var(--card-bg) !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+  font-size: 0.9rem !important;
+  padding: 8px 12px !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.bs-tooltip-auto[data-popper-placement^="top"] .tooltip-arrow::before,
+.bs-tooltip-top .tooltip-arrow::before {
+  border-top-color: var(--border-color) !important;
+}
+
+.bs-tooltip-auto[data-popper-placement^="right"] .tooltip-arrow::before,
+.bs-tooltip-right .tooltip-arrow::before {
+  border-right-color: var(--border-color) !important;
+}
+
+.bs-tooltip-auto[data-popper-placement^="bottom"] .tooltip-arrow::before,
+.bs-tooltip-bottom .tooltip-arrow::before {
+  border-bottom-color: var(--border-color) !important;
+}
+
+.bs-tooltip-auto[data-popper-placement^="left"] .tooltip-arrow::before,
+.bs-tooltip-left .tooltip-arrow::before {
+  border-left-color: var(--border-color) !important;
+}

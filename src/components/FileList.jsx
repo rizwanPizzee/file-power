@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { OverlayTrigger, Tooltip } from "react-bootstrap";
 import {
   FaFile,
   FaFilePdf,
@@ -112,6 +113,10 @@ export default function FileList({
         className="file-grid-card folder-card"
         onMouseEnter={() => setHoveredFile(folder)}
         onMouseLeave={() => setHoveredFile(null)}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          handleMenuClick(e, folder, "folder");
+        }}
       >
         <div
           className="file-grid-preview folder-preview"
@@ -139,13 +144,21 @@ export default function FileList({
             menuFile?.id === folder.id ? "active" : ""
           }`}
         >
-          <button
-            className="action-btn menu-btn"
-            onClick={(e) => handleMenuClick(e, folder, "folder")}
-            title="More options"
+          <OverlayTrigger
+            placement="bottom"
+            overlay={
+              <Tooltip id={`tooltip-more-folder-${folder.id}`}>
+                More options
+              </Tooltip>
+            }
           >
-            <FaEllipsisV />
-          </button>
+            <button
+              className="action-btn menu-btn"
+              onClick={(e) => handleMenuClick(e, folder, "folder")}
+            >
+              <FaEllipsisV />
+            </button>
+          </OverlayTrigger>
 
           {menuFile?.id === folder.id && menuType === "folder" && (
             <div
@@ -218,6 +231,10 @@ export default function FileList({
         className="file-grid-card"
         onMouseEnter={() => setHoveredFile(file)}
         onMouseLeave={() => setHoveredFile(null)}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          handleMenuClick(e, file, "file");
+        }}
       >
         {downloadingFileId === file.id && (
           <div className="download-overlay">
@@ -239,19 +256,35 @@ export default function FileList({
         </div>
 
         <div className="file-grid-info" onClick={() => onView(file)}>
-          <div className="file-grid-name" title={file.name}>
-            {file.name}
-          </div>
-          <div className="file-grid-meta" title={file.folderName}>
-            {file.folderName && (
-              <span className="folder-badge">
-                <FaFolder style={{ marginRight: 4, fontSize: "0.6rem" }} />
-                {file.folderName} •{" "}
-              </span>
-            )}
-            {formatBytes(file.size)} •{" "}
-            {new Date(file.uploaded_at).toLocaleDateString()}
-          </div>
+          <OverlayTrigger
+            placement="bottom"
+            delay={{ show: 400, hide: 100 }}
+            overlay={
+              <Tooltip id={`tooltip-file-${file.id}`}>{file.name}</Tooltip>
+            }
+          >
+            <div className="file-grid-name">{file.name}</div>
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="bottom"
+            delay={{ show: 400, hide: 100 }}
+            overlay={
+              <Tooltip id={`tooltip-file-meta-${file.id}`}>
+                {file.folderName || "No Folder"}
+              </Tooltip>
+            }
+          >
+            <div className="file-grid-meta">
+              {file.folderName && (
+                <span className="folder-badge">
+                  <FaFolder style={{ marginRight: 4, fontSize: "0.6rem" }} />
+                  {file.folderName} •{" "}
+                </span>
+              )}
+              {formatBytes(file.size)} •{" "}
+              {new Date(file.uploaded_at).toLocaleDateString()}
+            </div>
+          </OverlayTrigger>
         </div>
 
         <div
@@ -259,14 +292,23 @@ export default function FileList({
             menuFile?.id === file.id ? "active" : ""
           }`}
         >
-          <button
-            className="action-btn menu-btn"
-            onClick={(e) => handleMenuClick(e, file, "file")}
-            title="More options"
-            disabled={downloadingFileId === file.id}
+          <OverlayTrigger
+            placement="bottom"
+            delay={{ show: 400, hide: 100 }}
+            overlay={
+              <Tooltip id={`tooltip-more-file-${file.id}`}>
+                More options
+              </Tooltip>
+            }
           >
-            <FaEllipsisV />
-          </button>
+            <button
+              className="action-btn menu-btn"
+              onClick={(e) => handleMenuClick(e, file, "file")}
+              disabled={downloadingFileId === file.id}
+            >
+              <FaEllipsisV />
+            </button>
+          </OverlayTrigger>
 
           {menuFile?.id === file.id && menuType === "file" && (
             <div

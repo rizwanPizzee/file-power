@@ -6,6 +6,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from "react";
+import { OverlayTrigger, Tooltip } from "react-bootstrap";
 import { supabase } from "../lib/supabase";
 import {
   createFolder,
@@ -1000,28 +1001,42 @@ const FilesScreen = forwardRef((props, ref) => {
         </div>
 
         <div className="actions-bar">
-          <button
-            className="icon-button new-folder-button"
-            onClick={() => setNewFolderModalVisible(true)}
-            title="New Folder"
+          <OverlayTrigger
+            placement="bottom"
+            delay={{ show: 400, hide: 100 }}
+            overlay={<Tooltip id="tooltip-new-folder">New Folder</Tooltip>}
           >
-            <FaFolderPlus size={30} color="#fad920ff" />
-          </button>
-          <button
-            className="icon-button sort-button"
-            onClick={toggleSort}
-            title={`Sort by Date (${sortOrder})`}
+            <button
+              className="icon-button new-folder-button"
+              onClick={() => setNewFolderModalVisible(true)}
+            >
+              <FaFolderPlus size={30} color="#fad920ff" />
+            </button>
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="bottom"
+            delay={{ show: 400, hide: 100 }}
+            overlay={
+              <Tooltip id="tooltip-sort">Sort by Date ({sortOrder})</Tooltip>
+            }
           >
-            {sortOrder === "desc" ? <FaSortAmountDown /> : <FaSortAmountUp />}
-          </button>
-          <button
-            className="icon-button"
-            onClick={handleRefresh}
-            title="Refresh"
-            disabled={loading}
+            <button className="icon-button sort-button" onClick={toggleSort}>
+              {sortOrder === "desc" ? <FaSortAmountDown /> : <FaSortAmountUp />}
+            </button>
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="bottom"
+            delay={{ show: 400, hide: 100 }}
+            overlay={<Tooltip id="tooltip-refresh">Refresh</Tooltip>}
           >
-            <FaSync className={loading ? "spinner" : ""} />
-          </button>
+            <button
+              className="icon-button"
+              onClick={handleRefresh}
+              disabled={loading}
+            >
+              <FaSync className={loading ? "spinner" : ""} />
+            </button>
+          </OverlayTrigger>
         </div>
       </div>
 
@@ -1088,16 +1103,25 @@ const FilesScreen = forwardRef((props, ref) => {
       {/* Clear Duplicate Detection */}
       {activeDuplicateFileId && (
         <div className="duplicate-clear-container">
-          <button
-            className="icon-button1 active"
-            onClick={() => setActiveDuplicateFileId(null)}
-            title="Clear Duplicate Detection"
+          <OverlayTrigger
+            placement="bottom"
+            delay={{ show: 400, hide: 100 }}
+            overlay={
+              <Tooltip id="tooltip-clear-dup">
+                Clear Duplicate Detection
+              </Tooltip>
+            }
           >
-            <FaEyeSlash />{" "}
-            <span style={{ marginLeft: "10px" }}>
-              Clear Duplicate Detection
-            </span>
-          </button>
+            <button
+              className="icon-button1 active"
+              onClick={() => setActiveDuplicateFileId(null)}
+            >
+              <FaEyeSlash />{" "}
+              <span style={{ marginLeft: "10px" }}>
+                Clear Duplicate Detection
+              </span>
+            </button>
+          </OverlayTrigger>
         </div>
       )}
 

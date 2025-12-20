@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { OverlayTrigger, Tooltip } from "react-bootstrap";
 import { supabase } from "../lib/supabase";
 import CustomAlert from "./CustomAlert";
 import FileUploader from "./FileUploader";
@@ -145,53 +146,77 @@ export default function Header({
   return (
     <>
       <div className="header-container">
-        <button
-          className="logs-badge"
-          style={{ padding: 10, fontSize: 20 }}
-          title="Back"
-          onClick={onBack}
+        <OverlayTrigger
+          placement="bottom"
+          delay={{ show: 400, hide: 100 }}
+          overlay={<Tooltip id="tooltip-back">Back</Tooltip>}
         >
-          <FaArrowLeft color="white" />
-        </button>
-        <div
-          className="storage-badge"
-          onClick={fetchStorageUsage}
-          title="Refresh Storage"
+          <button
+            className="logs-badge"
+            style={{ padding: 10, fontSize: 20 }}
+            onClick={onBack}
+          >
+            <FaArrowLeft color="white" />
+          </button>
+        </OverlayTrigger>
+        <OverlayTrigger
+          placement="bottom"
+          delay={{ show: 400, hide: 100 }}
+          overlay={<Tooltip id="tooltip-storage">Refresh Storage</Tooltip>}
         >
-          {storageLoading
-            ? "Loading…"
-            : remainingBytes === null
-            ? "—"
-            : `${humanBytes(remainingBytes)} left`}
-        </div>
+          <div className="storage-badge" onClick={fetchStorageUsage}>
+            {storageLoading
+              ? "Loading…"
+              : remainingBytes === null
+              ? "—"
+              : `${humanBytes(remainingBytes)} left`}
+          </div>
+        </OverlayTrigger>
 
-        <div
-          className="logs-badge"
-          onClick={() => setLogsVisible(true)}
-          title="View Logs"
-          style={{
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
+        <OverlayTrigger
+          placement="bottom"
+          delay={{ show: 400, hide: 100 }}
+          overlay={<Tooltip id="tooltip-logs">View Logs</Tooltip>}
         >
-          <FaHistory />
-          Logs
-        </div>
-
-        <FileUploader
-          onUploadStart={onUploadStart}
-          onUploaded={onUploaded}
-          currentFolderId={currentFolderId}
-        />
-        <div
-          className="avatar-circle"
-          onClick={() => setProfileVisible(true)}
-          title="Profile"
+          <div
+            className="logs-badge"
+            onClick={() => setLogsVisible(true)}
+            style={{
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <FaHistory />
+            Logs
+          </div>
+        </OverlayTrigger>
+        <OverlayTrigger
+          placement="bottom"
+          delay={{ show: 400, hide: 100 }}
+          overlay={<Tooltip id="tooltip-upload-file">Upload File</Tooltip>}
         >
-          {avatarLetter}
-        </div>
+          <div>
+            <FileUploader
+              onUploadStart={onUploadStart}
+              onUploaded={onUploaded}
+              currentFolderId={currentFolderId}
+            />
+          </div>
+        </OverlayTrigger>
+        <OverlayTrigger
+          placement="bottom"
+          delay={{ show: 400, hide: 100 }}
+          overlay={<Tooltip id="tooltip-profile">Profile</Tooltip>}
+        >
+          <div
+            className="avatar-circle"
+            onClick={() => setProfileVisible(true)}
+          >
+            {avatarLetter}
+          </div>
+        </OverlayTrigger>
       </div>
 
       {profileVisible && (
