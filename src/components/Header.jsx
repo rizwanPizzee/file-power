@@ -4,8 +4,10 @@ import { supabase } from "../lib/supabase";
 import CustomAlert from "./CustomAlert";
 import FileUploader from "./FileUploader";
 import LogsModal from "./LogsModal";
+import UsersModal from "./UsersModal";
 import {
   FaUser,
+  FaUsers,
   FaSignOutAlt,
   FaInfoCircle,
   FaTimes,
@@ -25,8 +27,9 @@ export default function Header({
 }) {
   const [profileVisible, setProfileVisible] = useState(false);
   const [logsVisible, setLogsVisible] = useState(false);
+  const [usersVisible, setUsersVisible] = useState(false);
 
-  useLockBodyScroll(profileVisible);
+  useLockBodyScroll(profileVisible || logsVisible || usersVisible);
 
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertConfig, setAlertConfig] = useState({
@@ -173,6 +176,20 @@ export default function Header({
 
         <div
           className="logs-badge"
+          onClick={() => setUsersVisible(true)}
+          title="View Users"
+          style={{
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <FaUsers />
+          Users
+        </div>
+        <div
+          className="logs-badge"
           onClick={() => setLogsVisible(true)}
           title="View Logs"
           style={{
@@ -309,6 +326,10 @@ export default function Header({
       />
 
       <LogsModal visible={logsVisible} onClose={() => setLogsVisible(false)} />
+      <UsersModal
+        visible={usersVisible}
+        onClose={() => setUsersVisible(false)}
+      />
     </>
   );
 }
