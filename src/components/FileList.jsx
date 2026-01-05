@@ -21,6 +21,7 @@ import SkeletonItem from "./SkeletonItem";
 
 export default function FileList({
   data,
+  layout = "grid", // 'grid' or 'list'
   refreshing,
   onDelete,
   onDownload,
@@ -107,10 +108,113 @@ export default function FileList({
       });
     }
 
+    if (layout === "list") {
+      const isMenuOpen = menuFile?.id === folder.id;
+      return (
+        <div
+          key={folder.id}
+          className="file-list-card"
+          style={{ zIndex: isMenuOpen ? 100 : 1 }}
+          onClick={() => onFolderOpen && onFolderOpen(folder.id, folder.name)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleMenuClick(e, folder, "folder");
+          }}
+        >
+          <div className="file-list-preview">
+            <FaFolder
+              className="folder-icon-large"
+              style={{ fontSize: "1.5rem" }}
+            />
+          </div>
+          <div className="file-list-info">
+            <div className="file-list-name-container">
+              <div className="file-list-name" title={folder.name}>
+                {folder.name}
+              </div>
+            </div>
+            <div className="file-list-meta">
+              <span>{dateStr}</span>
+              <span>{itemText}</span>
+            </div>
+          </div>
+          <div className="file-list-actions active">
+            <button
+              className="action-btn"
+              onClick={(e) => handleMenuClick(e, folder, "folder")}
+              title="More options"
+            >
+              <FaEllipsisV />
+            </button>
+            {menuFile?.id === folder.id && menuType === "folder" && (
+              <div
+                className="file-menu-dropdown"
+                style={{ right: 0, top: "100%" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div
+                  className="menu-item"
+                  onClick={() =>
+                    handleMenuAction(
+                      () =>
+                        onFolderOpen && onFolderOpen(folder.id, folder.name),
+                      folder
+                    )
+                  }
+                >
+                  <FaFolderOpen className="menu-icon" />
+                  <span>Open Folder</span>
+                </div>
+                <div
+                  className="menu-item"
+                  onClick={() =>
+                    handleMenuAction(onFolderRename || (() => {}), folder)
+                  }
+                >
+                  <FaEdit className="menu-icon" />
+                  <span>Rename</span>
+                </div>
+                <div
+                  className="menu-item"
+                  onClick={() =>
+                    handleMenuAction(onFolderProperties || (() => {}), folder)
+                  }
+                >
+                  <FaInfoCircle className="menu-icon" />
+                  <span>Properties</span>
+                </div>
+                <div className="menu-divider" />
+                {currentUserEmail &&
+                  [
+                    "rizwanpizzee@gmail.com",
+                    "khanabdurrehman945@gmail.com",
+                    "naveedayaz@gmail.com",
+                    "zahid.razzaq149@gmail.com",
+                  ].includes(currentUserEmail) && (
+                    <div
+                      className="menu-item delete"
+                      onClick={() =>
+                        handleMenuAction(onFolderDelete || (() => {}), folder)
+                      }
+                    >
+                      <FaTrash className="menu-icon" />
+                      <span>Delete</span>
+                    </div>
+                  )}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    const isMenuOpen = menuFile?.id === folder.id;
     return (
       <div
         key={folder.id}
         className="file-grid-card folder-card"
+        style={{ zIndex: isMenuOpen ? 100 : 1 }}
         onMouseEnter={() => setHoveredFile(folder)}
         onMouseLeave={() => setHoveredFile(null)}
         onContextMenu={(e) => {
@@ -217,10 +321,149 @@ export default function FileList({
       duplicatesMap[file.id] && duplicatesMap[file.id].others?.length > 0;
     const isHovered = hoveredFile?.id === file.id;
 
+    if (layout === "list") {
+      const isMenuOpen = menuFile?.id === file.id;
+      return (
+        <div
+          key={file.id || file.path}
+          className="file-list-card"
+          style={{ zIndex: isMenuOpen ? 100 : 1 }}
+          onClick={() => onView(file)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleMenuClick(e, file, "file");
+          }}
+        >
+          <div className="file-list-preview">
+            <div
+              className="file-list-icon"
+              style={{
+                fontSize: "1.5rem",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              {getFileIcon(file.mime_type)}
+            </div>
+          </div>
+
+          <div className="file-list-info">
+            <div className="file-list-name-container">
+              <div className="file-list-name" title={file.name}>
+                {file.name}
+              </div>
+            </div>
+            <div className="file-list-meta">
+              {file.folderName && (
+                <span className="folder-badge" style={{ marginRight: 10 }}>
+                  <FaFolder style={{ marginRight: 4, fontSize: "0.8rem" }} />
+                  {file.folderName}
+                </span>
+              )}
+              <span style={{ minWidth: 70, textAlign: "right" }}>
+                {formatBytes(file.size)}
+              </span>
+              <span style={{ minWidth: 90, textAlign: "right" }}>
+                {new Date(file.uploaded_at).toLocaleDateString()}
+              </span>
+            </div>
+          </div>
+
+          <div className="file-list-actions active">
+            <button
+              className="action-btn"
+              onClick={(e) => handleMenuClick(e, file, "file")}
+              disabled={downloadingFileId === file.id}
+              title="More options"
+            >
+              <FaEllipsisV />
+            </button>
+            {menuFile?.id === file.id && menuType === "file" && (
+              <div
+                className="file-menu-dropdown"
+                style={{ right: 0, top: "100%" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div
+                  className="menu-item"
+                  onClick={() => handleMenuAction(onView, file)}
+                >
+                  <FaFolderOpen className="menu-icon" />
+                  <span>Open File</span>
+                </div>
+                <div
+                  className={`menu-item ${downloadingFileId ? "disabled" : ""}`}
+                  onClick={() => {
+                    if (!downloadingFileId) {
+                      handleMenuAction(onDownload, file);
+                    }
+                  }}
+                  style={{
+                    opacity: downloadingFileId ? 0.5 : 1,
+                    cursor: downloadingFileId ? "not-allowed" : "pointer",
+                  }}
+                >
+                  <FaDownload className="menu-icon" />
+                  <span>Download</span>
+                </div>
+                <div
+                  className="menu-item"
+                  onClick={() => handleMenuAction(onRename, file)}
+                >
+                  <FaEdit className="menu-icon" />
+                  <span>Rename</span>
+                </div>
+                <div
+                  className="menu-item"
+                  onClick={() => handleMenuAction(onMove || (() => {}), file)}
+                >
+                  <FaArrowsAlt className="menu-icon" />
+                  <span>Move to Folder</span>
+                </div>
+                <div
+                  className="menu-item"
+                  onClick={() => handleMenuAction(onProperties, file)}
+                >
+                  <FaInfoCircle className="menu-icon" />
+                  <span>Properties</span>
+                </div>
+                {/* <div
+                className="menu-item"
+                onClick={() => handleMenuAction(onShare, file)}
+              >
+                <FaShareAlt className="menu-icon" />
+                <span>Share</span>
+              </div> */}
+                <div className="menu-divider" />
+                {currentUserEmail &&
+                  [
+                    "rizwanpizzee@gmail.com",
+                    "khanabdurrehman945@gmail.com",
+                    "naveedayaz@gmail.com",
+                    "zahid.razzaq149@gmail.com",
+                  ].includes(currentUserEmail) && (
+                    <div
+                      className="menu-item delete"
+                      onClick={() => handleMenuAction(onDelete, file)}
+                    >
+                      <FaTrash className="menu-icon" />
+                      <span>Delete</span>
+                    </div>
+                  )}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    const isMenuOpen = menuFile?.id === file.id;
     return (
       <div
         key={file.id || file.path}
         className="file-grid-card"
+        style={{ zIndex: isMenuOpen ? 100 : 1 }}
         onMouseEnter={() => setHoveredFile(file)}
         onMouseLeave={() => setHoveredFile(null)}
         onContextMenu={(e) => {
@@ -419,9 +662,13 @@ export default function FileList({
 
       <div className="files-content">
         {refreshing ? (
-          <div className="file-grid-container">
+          <div
+            className={
+              layout === "list" ? "file-list-container" : "file-grid-container"
+            }
+          >
             {Array.from({ length: 15 }).map((_, index) => (
-              <SkeletonItem key={`skel-${index}`} />
+              <SkeletonItem key={`skel-${index}`} layout={layout} />
             ))}
           </div>
         ) : data.length === 0 ? (
@@ -455,7 +702,11 @@ export default function FileList({
             </div>
           </div>
         ) : (
-          <div className="file-grid-container">
+          <div
+            className={
+              layout === "list" ? "file-list-container" : "file-grid-container"
+            }
+          >
             {data.map((item) =>
               item._isFolder ? renderFolderItem(item) : renderFileItem(item)
             )}

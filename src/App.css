@@ -2398,7 +2398,7 @@ body {
 .folder-icon-large {
   font-size: 3rem;
   color: #ffe604;
-  margin-bottom: 12px;
+  /* margin-bottom: 12px; */
 }
 
 .properties-title {
@@ -2616,9 +2616,9 @@ body {
 .skeleton-shimmer {
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.05) 25%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 255, 255, 0.05) 75%
+    rgba(255, 255, 255, 0.3) 25%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0.5) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
@@ -2781,4 +2781,177 @@ body {
   .upload-btn {
     padding: 8px 15px;
   }
+}
+
+/* Layout Toggle */
+.layout-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  margin-left: auto;
+}
+
+.layout-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.layout-toggle-btn.active {
+  color: var(--primary-btn-hover);
+}
+
+/* File List View Styles */
+.file-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-list-card {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: #1b5a8d73;
+  border: 1px solid #1970b8;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  position: relative;
+}
+
+.file-list-card:hover {
+  background: #2e679c;
+  border-color: #03aaf8;
+}
+
+.file-list-preview {
+  margin-right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-list-icon {
+  font-size: 1.5rem;
+}
+
+.file-list-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  margin-right: 16px;
+}
+
+.file-list-name-container {
+  flex: 1;
+  min-width: 0;
+  padding-right: 16px;
+}
+
+.file-list-name {
+  font-size: 0.95rem;
+  color: var(--text-color);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-list-meta {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.file-list-actions {
+  position: relative;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  display: flex;
+  align-items: center;
+}
+
+.file-list-card:hover .file-list-actions,
+.file-list-actions.active {
+  opacity: 1;
+}
+
+.file-list-actions .action-btn {
+  background: transparent;
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
+}
+
+.file-list-actions .action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 768px) {
+  .file-list-meta {
+    display: none;
+  }
+}
+
+/* Skeleton List Styles */
+.skeleton-list-card {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px 12px 16px;
+  background: #1b5a8d73;
+  border: 1px solid #1970b8;
+  border-radius: var(--radius-md);
+  margin-bottom: 0px;
+}
+
+.skeleton-list-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  margin-right: 16px;
+}
+
+.skeleton-list-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  margin-right: 16px;
+}
+
+.skeleton-text-md {
+  height: 14px;
+  width: 200px;
+  border-radius: 4px;
+}
+
+.skeleton-list-meta {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.skeleton-list-meta .meta-item {
+  width: 60px;
+  height: 12px;
+  border-radius: 4px;
+}
+.skeleton-list-meta .vertical-bar-skeleton {
+  /* background: rgba(156, 156, 156, 0.452); */
+  width: 5px;
+  height: 18px;
+  border-radius: 4px;
 }

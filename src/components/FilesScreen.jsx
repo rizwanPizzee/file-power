@@ -38,6 +38,7 @@ import {
   FaSpinner,
 } from "react-icons/fa";
 import { STORAGE_BUCKET } from "../lib/constants";
+import { FaThLarge, FaList } from "react-icons/fa";
 import "../App.css";
 
 const FilesScreen = forwardRef((props, ref) => {
@@ -48,6 +49,20 @@ const FilesScreen = forwardRef((props, ref) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState("desc");
   const [activeDuplicateFileId, setActiveDuplicateFileId] = useState(null);
+  const [layout, setLayout] = useState("grid"); // 'grid' or 'list'
+
+  useEffect(() => {
+    const savedLayout = localStorage.getItem("fileLayout");
+    if (savedLayout) {
+      setLayout(savedLayout);
+    }
+  }, []);
+
+  const toggleLayout = () => {
+    const newLayout = layout === "grid" ? "list" : "grid";
+    setLayout(newLayout);
+    localStorage.setItem("fileLayout", newLayout);
+  };
 
   // Folder navigation state
   const [currentFolderId, setCurrentFolderId] = useState(null);
@@ -1088,11 +1103,27 @@ const FilesScreen = forwardRef((props, ref) => {
       )}
 
       {/* Stats */}
-      <div className="stats-container">
+      <div
+        className="stats-container"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <span className="stats-text">
           {folders.length} Folder{folders.length !== 1 ? "s" : ""},{" "}
           {files.length} File{files.length !== 1 ? "s" : ""}
         </span>
+        <button
+          className="layout-toggle-btn"
+          onClick={toggleLayout}
+          title={
+            layout === "grid" ? "Switch to List View" : "Switch to Grid View"
+          }
+        >
+          {layout === "grid" ? <FaList /> : <FaThLarge />}
+        </button>
       </div>
 
       {/* Clear Duplicate Detection */}
@@ -1114,6 +1145,7 @@ const FilesScreen = forwardRef((props, ref) => {
 
       <FileList
         data={filteredList}
+        layout={layout}
         refreshing={loading || refreshing || isSearchingAll}
         onRefresh={handleRefresh}
         onDelete={handleDelete}
