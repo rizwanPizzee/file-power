@@ -1001,34 +1001,20 @@ const FilesScreen = forwardRef((props, ref) => {
         </div>
 
         <div className="actions-bar">
-          <OverlayTrigger
-            placement="bottom"
-            delay={{ show: 400, hide: 100 }}
-            overlay={<Tooltip id="tooltip-new-folder">New Folder</Tooltip>}
-          >
+          <div title="New Folder">
             <button
               className="icon-button new-folder-button"
               onClick={() => setNewFolderModalVisible(true)}
             >
               <FaFolderPlus size={30} color="#fad920ff" />
             </button>
-          </OverlayTrigger>
-          <OverlayTrigger
-            placement="bottom"
-            delay={{ show: 400, hide: 100 }}
-            overlay={
-              <Tooltip id="tooltip-sort">Sort by Date ({sortOrder})</Tooltip>
-            }
-          >
+          </div>
+          <div title={`Sort by Date (${sortOrder})`}>
             <button className="icon-button sort-button" onClick={toggleSort}>
               {sortOrder === "desc" ? <FaSortAmountDown /> : <FaSortAmountUp />}
             </button>
-          </OverlayTrigger>
-          <OverlayTrigger
-            placement="bottom"
-            delay={{ show: 400, hide: 100 }}
-            overlay={<Tooltip id="tooltip-refresh">Refresh</Tooltip>}
-          >
+          </div>
+          <div title="Refresh">
             <button
               className="icon-button"
               onClick={handleRefresh}
@@ -1036,7 +1022,7 @@ const FilesScreen = forwardRef((props, ref) => {
             >
               <FaSync className={loading ? "spinner" : ""} />
             </button>
-          </OverlayTrigger>
+          </div>
         </div>
       </div>
 
@@ -1103,15 +1089,7 @@ const FilesScreen = forwardRef((props, ref) => {
       {/* Clear Duplicate Detection */}
       {activeDuplicateFileId && (
         <div className="duplicate-clear-container">
-          <OverlayTrigger
-            placement="bottom"
-            delay={{ show: 400, hide: 100 }}
-            overlay={
-              <Tooltip id="tooltip-clear-dup">
-                Clear Duplicate Detection
-              </Tooltip>
-            }
-          >
+          <div title="Clear Duplicate Detection">
             <button
               className="icon-button1 active"
               onClick={() => setActiveDuplicateFileId(null)}
@@ -1121,7 +1099,7 @@ const FilesScreen = forwardRef((props, ref) => {
                 Clear Duplicate Detection
               </span>
             </button>
-          </OverlayTrigger>
+          </div>
         </div>
       )}
 

@@ -159,64 +159,46 @@ export default function Header({
             <FaArrowLeft color="white" />
           </button>
         </OverlayTrigger>
-        <OverlayTrigger
-          placement="bottom"
-          delay={{ show: 400, hide: 100 }}
-          overlay={<Tooltip id="tooltip-storage">Refresh Storage</Tooltip>}
+        <div
+          className="storage-badge"
+          onClick={fetchStorageUsage}
+          title="Refresh Storage"
         >
-          <div className="storage-badge" onClick={fetchStorageUsage}>
-            {storageLoading
-              ? "Loading…"
-              : remainingBytes === null
-              ? "—"
-              : `${humanBytes(remainingBytes)} left`}
-          </div>
-        </OverlayTrigger>
+          {storageLoading
+            ? "Loading…"
+            : remainingBytes === null
+            ? "—"
+            : `${humanBytes(remainingBytes)} left`}
+        </div>
 
-        <OverlayTrigger
-          placement="bottom"
-          delay={{ show: 400, hide: 100 }}
-          overlay={<Tooltip id="tooltip-logs">View Logs</Tooltip>}
+        <div
+          className="logs-badge"
+          onClick={() => setLogsVisible(true)}
+          title="View Logs"
+          style={{
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
         >
-          <div
-            className="logs-badge"
-            onClick={() => setLogsVisible(true)}
-            style={{
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            }}
-          >
-            <FaHistory />
-            Logs
-          </div>
-        </OverlayTrigger>
-        <OverlayTrigger
-          placement="bottom"
-          delay={{ show: 400, hide: 100 }}
-          overlay={<Tooltip id="tooltip-upload-file">Upload File</Tooltip>}
+          <FaHistory />
+          Logs
+        </div>
+        <div title="Upload File">
+          <FileUploader
+            onUploadStart={onUploadStart}
+            onUploaded={onUploaded}
+            currentFolderId={currentFolderId}
+          />
+        </div>
+        <div
+          className="avatar-circle"
+          onClick={() => setProfileVisible(true)}
+          title="Profile"
         >
-          <div>
-            <FileUploader
-              onUploadStart={onUploadStart}
-              onUploaded={onUploaded}
-              currentFolderId={currentFolderId}
-            />
-          </div>
-        </OverlayTrigger>
-        <OverlayTrigger
-          placement="bottom"
-          delay={{ show: 400, hide: 100 }}
-          overlay={<Tooltip id="tooltip-profile">Profile</Tooltip>}
-        >
-          <div
-            className="avatar-circle"
-            onClick={() => setProfileVisible(true)}
-          >
-            {avatarLetter}
-          </div>
-        </OverlayTrigger>
+          {avatarLetter}
+        </div>
       </div>
 
       {profileVisible && (

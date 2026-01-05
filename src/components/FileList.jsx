@@ -144,21 +144,13 @@ export default function FileList({
             menuFile?.id === folder.id ? "active" : ""
           }`}
         >
-          <OverlayTrigger
-            placement="bottom"
-            overlay={
-              <Tooltip id={`tooltip-more-folder-${folder.id}`}>
-                More options
-              </Tooltip>
-            }
+          <button
+            className="action-btn menu-btn"
+            onClick={(e) => handleMenuClick(e, folder, "folder")}
+            title="More options"
           >
-            <button
-              className="action-btn menu-btn"
-              onClick={(e) => handleMenuClick(e, folder, "folder")}
-            >
-              <FaEllipsisV />
-            </button>
-          </OverlayTrigger>
+            <FaEllipsisV />
+          </button>
 
           {menuFile?.id === folder.id && menuType === "folder" && (
             <div
@@ -265,26 +257,19 @@ export default function FileList({
           >
             <div className="file-grid-name">{file.name}</div>
           </OverlayTrigger>
-          <OverlayTrigger
-            placement="bottom"
-            delay={{ show: 400, hide: 100 }}
-            overlay={
-              <Tooltip id={`tooltip-file-meta-${file.id}`}>
-                {file.folderName || "No Folder"}
-              </Tooltip>
-            }
+          <div
+            className="file-grid-meta"
+            title={file.folderName || "No Folder"}
           >
-            <div className="file-grid-meta">
-              {file.folderName && (
-                <span className="folder-badge">
-                  <FaFolder style={{ marginRight: 4, fontSize: "0.6rem" }} />
-                  {file.folderName} •{" "}
-                </span>
-              )}
-              {formatBytes(file.size)} •{" "}
-              {new Date(file.uploaded_at).toLocaleDateString()}
-            </div>
-          </OverlayTrigger>
+            {file.folderName && (
+              <span className="folder-badge">
+                <FaFolder style={{ marginRight: 4, fontSize: "0.6rem" }} />
+                {file.folderName} •{" "}
+              </span>
+            )}
+            {formatBytes(file.size)} •{" "}
+            {new Date(file.uploaded_at).toLocaleDateString()}
+          </div>
         </div>
 
         <div
@@ -292,23 +277,14 @@ export default function FileList({
             menuFile?.id === file.id ? "active" : ""
           }`}
         >
-          <OverlayTrigger
-            placement="bottom"
-            delay={{ show: 400, hide: 100 }}
-            overlay={
-              <Tooltip id={`tooltip-more-file-${file.id}`}>
-                More options
-              </Tooltip>
-            }
+          <button
+            className="action-btn menu-btn"
+            onClick={(e) => handleMenuClick(e, file, "file")}
+            disabled={downloadingFileId === file.id}
+            title="More options"
           >
-            <button
-              className="action-btn menu-btn"
-              onClick={(e) => handleMenuClick(e, file, "file")}
-              disabled={downloadingFileId === file.id}
-            >
-              <FaEllipsisV />
-            </button>
-          </OverlayTrigger>
+            <FaEllipsisV />
+          </button>
 
           {menuFile?.id === file.id && menuType === "file" && (
             <div
