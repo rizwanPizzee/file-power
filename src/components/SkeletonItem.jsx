@@ -32,9 +32,9 @@ export default function SkeletonItem({ layout = "grid" }) {
             }}
           ></div>
           <div className="skeleton-list-meta">
-            <div className="skeleton-shimmer skeleton-text-sm meta-item"></div>
+            <div className="skeleton-shimmer skeleton-text-sm meta-item skeleton-text-700px"></div>
             <div
-              className="skeleton-shimmer skeleton-text-sm meta-item"
+              className="skeleton-shimmer skeleton-text-sm meta-item skeleton-text-700px"
               style={{
                 width: "70px",
                 marginRight: "10px",
