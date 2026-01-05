@@ -1989,9 +1989,18 @@ body {
 .breadcrumb-path {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 4px;
   overflow-x: auto;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.breadcrumb-path::-webkit-scrollbar {
+  display: none;
 }
 
 .breadcrumb-item {

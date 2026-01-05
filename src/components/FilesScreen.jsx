@@ -54,6 +54,15 @@ const FilesScreen = forwardRef((props, ref) => {
   const [currentFolderName, setCurrentFolderName] = useState(null);
   const [folderPath, setFolderPath] = useState([]);
 
+  const breadcrumbPathRef = React.useRef(null);
+
+  useEffect(() => {
+    if (breadcrumbPathRef.current) {
+      breadcrumbPathRef.current.scrollLeft =
+        breadcrumbPathRef.current.scrollWidth;
+    }
+  }, [files, folders, currentFolderId]);
+
   // Create folder modal
   const [newFolderModalVisible, setNewFolderModalVisible] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
@@ -1056,7 +1065,7 @@ const FilesScreen = forwardRef((props, ref) => {
           <button className="breadcrumb-back" onClick={navigateBack}>
             <FaArrowLeft />
           </button>
-          <div className="breadcrumb-path">
+          <div className="breadcrumb-path" ref={breadcrumbPathRef}>
             <button className="breadcrumb-item" onClick={navigateToRoot}>
               <FaHome />
               <span>Root</span>
