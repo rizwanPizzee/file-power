@@ -7,7 +7,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 11, 20, 0.589);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
@@ -492,4 +492,13 @@
 }
 .skeleton-loading .skeleton-text.short {
   width: 40%;
+}
+
+@media (max-width: 500px) {
+  .users-modal-container {
+    width: 100%;
+    max-width: none;
+    max-height: 95vh;
+    border-radius: 0;
+  }
 }

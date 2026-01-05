@@ -387,7 +387,7 @@
 }
 
 .modal-header {
-  padding: 1.5rem;
+  padding: 15px 18px;
   border-bottom: 1px solid rgba(58, 98, 118, 0.4);
   display: flex;
   justify-content: space-between;

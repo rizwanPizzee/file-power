@@ -432,7 +432,7 @@ body {
 .about-modal {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  padding: 24px;
+  /* padding: 24px; */
   border-radius: var(--radius-lg);
   width: 90%;
   max-width: 420px;
@@ -446,7 +446,7 @@ body {
 
 .profile-modal {
   max-width: 480px;
-  padding: 0px 15px 15px 15px;
+  /* padding: 0px 5px 5px 5px; */
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -495,7 +495,7 @@ body {
   text-align: center;
   overflow-y: auto;
   flex: 1;
-  padding: 0 10px;
+  padding: 0 12px 15px 12px;
 }
 
 .modal-body {
@@ -1272,12 +1272,12 @@ body {
     margin-right: 12px;
   }
 
-  .modal-box,
+  /* .modal-box,
   .modal-content,
   .profile-modal {
-    padding: 20px;
+    padding: 10px; 
     max-width: 95%;
-  }
+  } */
   .modal-content {
     padding: 0;
   }
@@ -1661,7 +1661,7 @@ body {
 }
 
 .logs-modal .modal-header {
-  padding: 20px 24px;
+  padding: 10px 18px;
   margin-bottom: 0;
 }
 
@@ -2259,7 +2259,7 @@ body {
   flex: 1;
   overflow-y: auto;
   max-height: 350px;
-  padding-right: 8px;
+  padding: 0px 12px 20px 0px;
 }
 
 .move-tree-node {
