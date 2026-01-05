@@ -52,7 +52,7 @@ export default function AboutPage({ onBack }) {
       <header className="about-header">
         <div className="header-content">
           <button className="back-button" onClick={onBack}>
-            <FaArrowLeft />
+            <FaArrowLeft size={23} />
           </button>
           <h1 className="about-title">About Tools</h1>
           <div></div>

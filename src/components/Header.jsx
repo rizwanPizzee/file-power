@@ -152,7 +152,7 @@ export default function Header({
         <OverlayTrigger
           placement="bottom"
           delay={{ show: 400, hide: 100 }}
-          overlay={<Tooltip id="tooltip-back">Back</Tooltip>}
+          overlay={<Tooltip id="tooltip-back">Back to Home</Tooltip>}
         >
           <button
             className="logs-badge"
@@ -186,7 +186,7 @@ export default function Header({
           }}
         >
           <FaUsers />
-          Users
+          <span className="header-text">Users</span>
         </div>
         <div
           className="logs-badge"
@@ -200,7 +200,7 @@ export default function Header({
           }}
         >
           <FaHistory />
-          Logs
+          <span className="header-text">Logs</span>
         </div>
         <div title="Upload File">
           <FileUploader

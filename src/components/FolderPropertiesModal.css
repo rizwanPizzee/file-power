@@ -1,0 +1,125 @@
+/* FolderPropertiesModal.css */
+
+.properties-modal {
+  max-width: 450px !important; /* Ensure it's not too wide */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.properties-content {
+  padding: 24px;
+  overflow-y: auto;
+  max-height: 70vh;
+}
+
+.properties-icon-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.folder-icon-large {
+  font-size: 64px;
+  color: #fbbf24; /* Folder yellow */
+  margin-bottom: 16px;
+  filter: drop-shadow(0 8px 16px rgba(251, 191, 36, 0.2));
+  /* animation: pulse 2s infinite ease-in-out; */
+}
+
+.properties-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  text-align: center;
+  color: #ffffff;
+  word-break: break-all;
+}
+
+.properties-section {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.properties-section:last-child {
+  margin-bottom: 0;
+}
+
+.properties-section-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.properties-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.properties-row:last-child {
+  margin-bottom: 0;
+}
+
+.properties-label {
+  color: #94a3b8;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.properties-value {
+  color: #e2e8f0;
+  font-weight: 500;
+  text-align: right;
+  word-break: break-word;
+}
+
+.deleted-badge {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 8px;
+  font-weight: 600;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.properties-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #94a3b8;
+  padding: 20px;
+  font-size: 0.9rem;
+}
+
+/* Scrollbar for content */
+.properties-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.properties-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.properties-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.properties-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}

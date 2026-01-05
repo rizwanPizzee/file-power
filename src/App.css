@@ -399,6 +399,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  height: 40px;
 }
 
 .storage-badge:hover {
@@ -1941,6 +1942,12 @@ body {
   }
 }
 
+@media (max-width: 700px) {
+  .storage-badge {
+    display: none;
+  }
+}
+
 /* ============================================ */
 /* FOLDER MANAGEMENT STYLES */
 /* ============================================ */
@@ -2747,4 +2754,17 @@ body {
 .bs-tooltip-auto[data-popper-placement^="left"] .tooltip-arrow::before,
 .bs-tooltip-left .tooltip-arrow::before {
   border-left-color: var(--border-color) !important;
+}
+
+@media (max-width: 500px) {
+  .logs-badge {
+    padding: 8px 15px;
+    font-size: 1rem;
+  }
+  .header-text {
+    display: none;
+  }
+  .upload-btn {
+    padding: 8px 15px;
+  }
 }

@@ -32,7 +32,6 @@
   animation: slideUp 0.3s ease-out;
   overflow: hidden;
 }
-
 /* Header */
 .users-modal-header {
   display: flex;
@@ -178,10 +177,12 @@
     rgba(33, 68, 100, 0.1) 0%,
     transparent 100%
   );
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .users-list-container::-webkit-scrollbar {
-  width: 6px;
+  display: none;
 }
 
 .users-list-container::-webkit-scrollbar-track {
@@ -287,7 +288,6 @@
   flex-direction: column;
   height: 100%;
 }
-
 .detail-header {
   display: flex;
   align-items: center;
@@ -299,7 +299,7 @@
   backdrop-filter: blur(5px);
   margin: -10px -20px 20px -20px;
   padding: 8px 20px;
-  /* border-bottom: 1px solid rgba(45, 90, 123, 0.4); */
+  border-bottom: 1px solid rgba(45, 90, 123, 0.4);
 }
 
 .back-button {
@@ -331,15 +331,17 @@
   flex: 1;
   overflow-y: auto;
   padding-right: 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .detail-content::-webkit-scrollbar {
-  width: 4px;
+  display: none;
 }
-.detail-content::-webkit-scrollbar-thumb {
+/*.detail-content::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 2px;
-}
+}*/
 
 .large-avatar-container {
   display: flex;

@@ -191,7 +191,7 @@ export default function UsersModal({ visible, onClose }) {
             onClick={() => setSelectedUser(null)}
             title="Back to list"
           >
-            <FaArrowLeft size={16} />
+            <FaArrowLeft size={18} />
           </button>
           <span className="detail-title">User Details</span>
         </div>

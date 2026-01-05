@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaTimes, FaFolder, FaSpinner } from "react-icons/fa";
 import { supabase } from "../lib/supabase";
 import "../App.css";
+import "./FolderPropertiesModal.css";
 
 export default function FolderPropertiesModal({ visible, folder, onClose }) {
   const [creator, setCreator] = useState(null);

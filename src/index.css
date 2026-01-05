@@ -92,3 +92,13 @@ body {
 .slide-up {
   animation: slideUp 0.2s ease-out;
 }
+
+@media (max-width: 500px) {
+  .logs-badge {
+    padding: 8px 15px;
+    font-size: 1rem;
+  }
+  .header-text {
+    display: none;
+  }
+}
